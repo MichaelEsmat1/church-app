@@ -3,106 +3,92 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>نظام خدمة الكنيسة</title>
+<title>كنيسة الملاك والروماني — نظام الخدمة</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:system-ui,sans-serif;background:#f4f4f0;color:#1a1a1a;direction:rtl;min-height:100vh;}
-  .page{display:none;padding:1.25rem;max-width:640px;margin:0 auto;}
-  .page.active{display:block;}
-  h1{font-size:20px;font-weight:600;}
-  h2{font-size:17px;font-weight:600;}
-  label{font-size:13px;color:#555;display:block;margin-bottom:5px;margin-top:12px;}
-  label:first-of-type{margin-top:0;}
-  input,select,textarea{
-    width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;
-    font-size:14px;font-family:inherit;background:#fff;color:#1a1a1a;
-    outline:none;transition:border-color 0.15s;
-  }
-  input:focus,select:focus,textarea:focus{border-color:#185FA5;}
-  textarea{min-height:85px;resize:vertical;}
-  .btn{
-    width:100%;margin-top:1rem;padding:10px;font-size:14px;cursor:pointer;
-    border-radius:8px;border:1px solid #ccc;background:#fff;color:#1a1a1a;
-    font-family:inherit;transition:background 0.15s;
-  }
-  .btn:hover{background:#eee;}
-  .btn-primary{background:#185FA5;color:#fff;border-color:#185FA5;}
-  .btn-primary:hover{background:#0C447C;}
-  .btn-success{background:#3B6D11;color:#fff;border-color:#3B6D11;}
-  .btn-success:hover{background:#27500A;}
-  .btn-sm{width:auto;padding:5px 12px;margin-top:0;font-size:13px;}
-  .btn-del{width:auto;padding:5px 10px;margin-top:0;font-size:13px;color:#a32d2d;border-color:#f0a0a0;background:#fff;}
-  .btn-del:hover{background:#fcebeb;}
-  .card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1.25rem;margin-bottom:1rem;}
-  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid #eee;}
-  .icon-btn{
-    background:#fff;border:1px solid #ddd;border-radius:8px;padding:6px 11px;
-    cursor:pointer;color:#555;font-size:13px;display:inline-flex;align-items:center;gap:5px;font-family:inherit;
-  }
-  .icon-btn:hover{background:#f5f5f5;}
-  .logo-area{text-align:center;padding:2rem 0 1.5rem;}
-  .logo-circle{width:64px;height:64px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;margin:0 auto 0.75rem;font-size:28px;}
-  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem;}
-  .stat-box{background:#f7f7f5;border-radius:8px;padding:10px;text-align:center;border:1px solid #eee;}
-  .stat-box .s-label{font-size:11px;color:#777;margin-bottom:3px;}
-  .stat-box .s-val{font-size:22px;font-weight:600;}
-  .servant-item{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:10px 13px;background:#f9f9f7;border-radius:9px;border:1px solid #eee;margin-bottom:7px;
-    flex-wrap:wrap;gap:7px;
-  }
-  .servant-name{font-size:14px;font-weight:600;}
-  .servant-meta{font-size:12px;color:#777;margin-top:2px;}
-  .badge{font-size:11px;padding:2px 9px;border-radius:99px;white-space:nowrap;font-weight:500;}
-  .badge-done{background:#eaf3de;color:#3b6d11;}
-  .badge-pending{background:#faeeda;color:#854f0b;}
-  .badge-stage{background:#e6f1fb;color:#185fa5;}
-
-  /* ===== RATING BUTTONS ===== */
-  .rating-group{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px;}
-  .r-btn{
-    padding:8px 18px;border-radius:99px;border:1.5px solid #ccc;
-    background:#fff;cursor:pointer;font-size:14px;color:#555;
-    font-family:inherit;transition:all 0.15s;font-weight:500;
-  }
-  .r-btn:hover{background:#f0f0f0;border-color:#999;}
-  .r-btn.sel-yes{background:#3B6D11;color:#fff;border-color:#3B6D11;}
-  .r-btn.sel-no{background:#a32d2d;color:#fff;border-color:#a32d2d;}
-  .r-btn.sel-partial{background:#854f0b;color:#fff;border-color:#854f0b;}
-
-  .progress-bar{height:5px;background:#eee;border-radius:99px;margin-bottom:1rem;overflow:hidden;}
-  .progress-fill{height:100%;background:#185FA5;border-radius:99px;transition:width 0.3s;}
-  .tab-bar{display:flex;gap:0;margin-bottom:1rem;border-bottom:1px solid #eee;}
-  .tab{
-    padding:9px 15px;font-size:13px;cursor:pointer;border:none;background:none;
-    color:#777;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-1px;
-  }
-  .tab.active{color:#185FA5;border-bottom-color:#185FA5;font-weight:600;}
-  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:100;}
-  .modal-bg.open{display:flex;}
-  .modal{background:#fff;border-radius:12px;padding:1.25rem;width:92%;max-width:380px;border:1px solid #ddd;}
-  .modal h3{font-size:15px;font-weight:600;margin-bottom:1rem;}
-  .modal-btns{display:flex;gap:8px;margin-top:1rem;}
-  .modal-btns button{flex:1;}
-  .toast{
-    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-    background:#27500A;color:#fff;padding:9px 20px;border-radius:8px;
-    font-size:13px;display:none;z-index:200;white-space:nowrap;
-  }
-  .toast.show{display:block;}
-  .error-msg{color:#a32d2d;font-size:13px;margin-top:7px;display:none;}
-  .actions-row{display:flex;gap:6px;align-items:center;}
-  .section-title{font-size:13px;font-weight:600;color:#777;margin-bottom:8px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,sans-serif;background:#f4f4f0;color:#1a1a1a;direction:rtl;min-height:100vh;}
+.page{display:none;padding:1.25rem;max-width:680px;margin:0 auto;}
+.page.active{display:block;}
+h1{font-size:20px;font-weight:600;}
+h2{font-size:17px;font-weight:600;}
+h3{font-size:15px;font-weight:600;}
+label{font-size:13px;color:#555;display:block;margin-bottom:5px;margin-top:12px;}
+label:first-of-type{margin-top:0;}
+input,select,textarea{width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;color:#1a1a1a;outline:none;transition:border-color 0.15s;}
+input:focus,select:focus,textarea:focus{border-color:#185FA5;}
+textarea{min-height:80px;resize:vertical;}
+.btn{width:100%;margin-top:1rem;padding:10px;font-size:14px;cursor:pointer;border-radius:8px;border:1px solid #ccc;background:#fff;color:#1a1a1a;font-family:inherit;transition:background 0.15s;}
+.btn:hover{background:#eee;}
+.btn-primary{background:#185FA5;color:#fff;border-color:#185FA5;}
+.btn-primary:hover{background:#0C447C;}
+.btn-success{background:#3B6D11;color:#fff;border-color:#3B6D11;}
+.btn-success:hover{background:#27500A;}
+.btn-sm{width:auto;padding:5px 12px;margin-top:0;font-size:13px;}
+.btn-del{width:auto;padding:5px 10px;margin-top:0;font-size:13px;color:#a32d2d;border-color:#f0a0a0;background:#fff;}
+.btn-del:hover{background:#fcebeb;}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1.25rem;margin-bottom:1rem;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid #eee;}
+.icon-btn{background:#fff;border:1px solid #ddd;border-radius:8px;padding:6px 11px;cursor:pointer;color:#555;font-size:13px;display:inline-flex;align-items:center;gap:5px;font-family:inherit;}
+.icon-btn:hover{background:#f5f5f5;}
+.logo-area{text-align:center;padding:1.5rem 0 1.25rem;}
+.logo-circle{width:64px;height:64px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;margin:0 auto 0.75rem;font-size:28px;}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem;}
+.stat-box{background:#f7f7f5;border-radius:8px;padding:10px;text-align:center;border:1px solid #eee;}
+.stat-box .s-label{font-size:11px;color:#777;margin-bottom:3px;}
+.stat-box .s-val{font-size:22px;font-weight:600;}
+.item{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:#f9f9f7;border-radius:9px;border:1px solid #eee;margin-bottom:7px;flex-wrap:wrap;gap:7px;}
+.item-name{font-size:14px;font-weight:600;}
+.item-meta{font-size:12px;color:#777;margin-top:2px;}
+.badge{font-size:11px;padding:2px 9px;border-radius:99px;white-space:nowrap;font-weight:500;}
+.badge-done{background:#eaf3de;color:#3b6d11;}
+.badge-pending{background:#faeeda;color:#854f0b;}
+.badge-blue{background:#e6f1fb;color:#185fa5;}
+.badge-gray{background:#f0f0ee;color:#555;}
+.rating-group{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px;}
+.r-btn{padding:8px 18px;border-radius:99px;border:1.5px solid #ccc;background:#fff;cursor:pointer;font-size:14px;color:#555;font-family:inherit;transition:all 0.15s;font-weight:500;}
+.r-btn:hover{background:#f0f0f0;border-color:#999;}
+.r-btn.sel-yes{background:#3B6D11;color:#fff;border-color:#3B6D11;}
+.r-btn.sel-no{background:#a32d2d;color:#fff;border-color:#a32d2d;}
+.r-btn.sel-partial{background:#854f0b;color:#fff;border-color:#854f0b;}
+.progress-bar{height:5px;background:#eee;border-radius:99px;margin-bottom:1rem;overflow:hidden;}
+.progress-fill{height:100%;background:#185FA5;border-radius:99px;transition:width 0.3s;}
+.tab-bar{display:flex;gap:0;margin-bottom:1rem;border-bottom:1px solid #eee;overflow-x:auto;}
+.tab{padding:9px 14px;font-size:13px;cursor:pointer;border:none;background:none;color:#777;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;}
+.tab.active{color:#185FA5;border-bottom-color:#185FA5;font-weight:600;}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:100;padding:1rem;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:1.25rem;width:100%;max-width:420px;border:1px solid #ddd;max-height:90vh;overflow-y:auto;}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:1rem;}
+.modal-btns{display:flex;gap:8px;margin-top:1rem;}
+.modal-btns button{flex:1;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#27500A;color:#fff;padding:9px 20px;border-radius:8px;font-size:13px;display:none;z-index:200;white-space:nowrap;}
+.toast.show{display:block;}
+.error-msg{color:#a32d2d;font-size:13px;margin-top:7px;display:none;}
+.actions-row{display:flex;gap:6px;align-items:center;}
+.section-title{font-size:13px;font-weight:600;color:#777;margin-bottom:8px;}
+.divider{border:none;border-top:1px solid #eee;margin:1rem 0;}
+.check-group{display:flex;flex-direction:column;gap:8px;margin-top:7px;}
+.check-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;cursor:pointer;transition:all 0.15s;}
+.check-item:hover{background:#f5f5f5;}
+.check-item.checked{background:#eaf3de;border-color:#3B6D11;}
+.check-item input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:#3B6D11;}
+.check-item span{font-size:14px;}
+.info-box{background:#e6f1fb;border-radius:8px;padding:10px 13px;font-size:13px;color:#185fa5;margin-bottom:1rem;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#f7f7f5;padding:8px 10px;text-align:right;font-weight:600;border:1px solid #eee;}
+td{padding:8px 10px;border:1px solid #eee;vertical-align:top;}
+td input{border:none;background:transparent;padding:0;font-size:13px;}
+td input:focus{outline:none;background:#f0f8ff;border-radius:4px;padding:2px 4px;}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- ========== LOGIN ========== -->
 <div id="loginPage" class="page active">
   <div class="logo-area">
     <div class="logo-circle">⛪</div>
-    <h1>نظام خدمة الكنيسة</h1>
-    <p style="font-size:13px;color:#777;margin-top:5px;">تقارير الخدام والأمناء</p>
+    <h1>كنيسة الملاك والروماني</h1>
+    <p style="font-size:13px;color:#777;margin-top:5px;">أمانة الخدمة العامة</p>
   </div>
   <div class="card">
     <label>اسم المستخدم</label>
@@ -112,107 +98,163 @@
     <p class="error-msg" id="loginError">⚠️ بيانات غلط، حاول تاني</p>
     <button class="btn btn-primary" onclick="doLogin()">دخول</button>
   </div>
-  <p style="text-align:center;font-size:12px;color:#aaa;margin-top:6px;">super admin: admin / 1234</p>
 </div>
 
-<!-- SUPER ADMIN -->
+<!-- ========== SUPER ADMIN ========== -->
 <div id="superPage" class="page">
   <div class="header">
     <div>
-      <h2>لوحة المشرف العام</h2>
+      <h2>المشرف العام</h2>
       <p style="font-size:12px;color:#777;margin-top:2px;" id="superDate"></p>
     </div>
     <button class="icon-btn" onclick="doLogout()">🚪 خروج</button>
   </div>
   <div class="tab-bar">
-    <button class="tab active" onclick="switchTab('tabStages')">المراحل والأمناء</button>
-    <button class="tab" onclick="switchTab('tabReports')">كل التقارير</button>
-    <button class="tab" onclick="switchTab('tabExport')">تصدير</button>
+    <button class="tab active" onclick="switchSuperTab('sTabStages')">المراحل</button>
+    <button class="tab" onclick="switchSuperTab('sTabReports')">تقارير الأمناء</button>
+    <button class="tab" onclick="switchSuperTab('sTabSurveys')">استطلاعات الخدام</button>
+    <button class="tab" onclick="switchSuperTab('sTabExport')">تصدير</button>
   </div>
-  <div id="tabStages">
+  <div id="sTabStages">
     <div class="card">
       <p class="section-title">إضافة مرحلة جديدة</p>
-      <label>اسم المرحلة</label>
+      <label>اسم الخدمة / المرحلة</label>
       <input type="text" id="newStageName" placeholder="مثال: أعدادي، سنوي، خريجين..."/>
       <label>اسم الأمين</label>
       <input type="text" id="newAdminName" placeholder="مثال: مينا سمير"/>
       <label>اسم المستخدم للأمين</label>
-      <input type="text" id="newAdminUser" placeholder="مثال: mina2024"/>
-      <label>كلمة المرور</label>
+      <input type="text" id="newAdminUser" placeholder="مثال: 01012345678"/>
+      <label>كلمة مرور الأمين</label>
       <input type="text" id="newAdminPass" placeholder="مثال: 1234"/>
       <button class="btn btn-primary" onclick="addStage()">+ إضافة المرحلة</button>
     </div>
-    <div id="stagesList"></div>
+    <div id="superStagesList"></div>
   </div>
-  <div id="tabReports" style="display:none;"><div id="allReportsList"></div></div>
-  <div id="tabExport" style="display:none;">
+  <div id="sTabReports" style="display:none;"><div id="superReportsList"></div></div>
+  <div id="sTabSurveys" style="display:none;"><div id="superSurveysList"></div></div>
+  <div id="sTabExport" style="display:none;">
     <div class="card">
-      <p style="font-size:14px;color:#555;margin-bottom:1rem;">تصدير كل التقارير من كل المراحل دفعة واحدة.</p>
-      <button class="btn btn-success" onclick="exportAll()">📊 تصدير كل التقارير</button>
+      <p style="font-size:14px;color:#555;margin-bottom:1rem;">تصدير كل البيانات دفعة واحدة</p>
+      <button class="btn btn-success" onclick="exportAllReports()" style="margin-bottom:8px;">📊 تصدير تقارير الأمناء</button>
+      <button class="btn btn-success" onclick="exportAllSurveys()">📊 تصدير استطلاعات الخدام</button>
     </div>
-    <div id="exportByStage"></div>
+    <div id="superExportByStage"></div>
   </div>
 </div>
 
-<!-- ADMIN PAGE -->
+<!-- ========== ADMIN (أمين الخدمة) ========== -->
 <div id="adminPage" class="page">
   <div class="header">
     <div>
-      <h2 id="adminPageTitle">لوحة الأمين</h2>
-      <p style="font-size:12px;color:#777;margin-top:2px;" id="adminStageBadge"></p>
+      <h2 id="adminTitle">لوحة الأمين</h2>
+      <p style="font-size:12px;color:#777;margin-top:2px;" id="adminSubtitle"></p>
     </div>
     <button class="icon-btn" onclick="doLogout()">🚪</button>
   </div>
-  <div class="stat-grid" id="adminStats"></div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-    <p class="section-title" style="margin:0;">الخدام</p>
-    <button class="icon-btn" onclick="showAddServant()">+ إضافة خادم</button>
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchAdminTab('aTabReport')">تقريري</button>
+    <button class="tab" onclick="switchAdminTab('aTabServants')">الخدام</button>
+    <button class="tab" onclick="switchAdminTab('aTabSurveys')">استطلاعات الخدام</button>
   </div>
-  <div id="adminServantList"></div>
-  <button class="btn btn-success" onclick="exportStage(currentAdminStageId)" style="margin-top:0.75rem;">📊 تصدير Excel للمرحلة</button>
+
+  <!-- تقرير الأمين -->
+  <div id="aTabReport">
+    <div class="card">
+      <p class="section-title">تقرير أمين الخدمة</p>
+      <label>اسم الخدمة</label>
+      <input type="text" id="rServiceName" placeholder="اسم الخدمة"/>
+      <label>إيجابيات الخدمة</label>
+      <textarea id="rPositives" placeholder="اكتب إيجابيات الخدمة..."></textarea>
+      <label>سلبيات الخدمة (يجب أن تُعالج العام القادم)</label>
+      <textarea id="rNegatives" placeholder="اكتب سلبيات الخدمة..."></textarea>
+      <label>من تتوافر فيه إمكانيات القائد الناجح</label>
+      <div class="check-group" id="leaderTraits">
+        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="قوة"/> <span>💪 قوة</span></label>
+        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="تعليم"/> <span>📚 تعليم</span></label>
+        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="حكمة"/> <span>🧠 حكمة</span></label>
+        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="تدبير"/> <span>📋 تدبير</span></label>
+        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="تواضع"/> <span>🙏 تواضع</span></label>
+        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="رعاية"/> <span>❤️ رعاية</span></label>
+      </div>
+      <hr class="divider"/>
+      <p class="section-title">جدول تقرير الخدام</p>
+      <div style="overflow-x:auto;">
+        <table id="servantTable">
+          <thead>
+            <tr>
+              <th>اسم الخادم</th>
+              <th>نسبة الحضور</th>
+              <th>عدد مرات الافتقاد</th>
+              <th>عدد مرات تحضير الدرس</th>
+              <th>ترشيح للعام القادم</th>
+              <th>ملاحظات</th>
+            </tr>
+          </thead>
+          <tbody id="servantTableBody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-primary" onclick="saveAdminReport()" style="margin-top:1rem;">💾 حفظ التقرير</button>
+    </div>
+  </div>
+
+  <!-- الخدام -->
+  <div id="aTabServants" style="display:none;">
+    <div class="stat-grid" id="adminStats"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <p class="section-title" style="margin:0;">الخدام</p>
+      <button class="icon-btn" onclick="showAddServantModal()">+ إضافة خادم</button>
+    </div>
+    <div id="adminServantList"></div>
+    <button class="btn btn-success" onclick="exportStageServants()" style="margin-top:0.5rem;">📊 تصدير Excel</button>
+  </div>
+
+  <!-- استطلاعات الخدام -->
+  <div id="aTabSurveys" style="display:none;">
+    <div id="adminSurveysList"></div>
+  </div>
 </div>
 
-<!-- REPORT PAGE -->
-<div id="reportPage" class="page">
+<!-- ========== SERVANT (الخادم) ========== -->
+<div id="servantPage" class="page">
   <div class="header">
     <div>
-      <p style="font-size:12px;color:#777;" id="reportStepLabel"></p>
-      <h2 id="reportPersonName"></h2>
+      <h2 id="servantPageName">استطلاع رأي الخادم</h2>
+      <p style="font-size:12px;color:#777;margin-top:2px;" id="servantPageStage"></p>
     </div>
-    <button class="icon-btn" onclick="backToDash()">✕</button>
+    <button class="icon-btn" onclick="doLogout()">🚪</button>
   </div>
-  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
   <div class="card">
-    <label>الحضور</label>
-    <div class="rating-group" id="rAttendance">
-      <button class="r-btn" onclick="pick('attendance','حاضر','yes',this)">حاضر</button>
-      <button class="r-btn" onclick="pick('attendance','غائب','no',this)">غائب</button>
-      <button class="r-btn" onclick="pick('attendance','متأخر','partial',this)">متأخر</button>
-    </div>
-    <label style="margin-top:1rem;">يكمل في الخدمة السنة الجاية؟</label>
-    <div class="rating-group" id="rRenew">
-      <button class="r-btn" onclick="pick('renew','آه ينفع','yes',this)">آه ينفع</button>
-      <button class="r-btn" onclick="pick('renew','لأ','no',this)">لأ</button>
-      <button class="r-btn" onclick="pick('renew','محتاج تقييم','partial',this)">محتاج تقييم</button>
-    </div>
-    <label style="margin-top:1rem;">مساعد ومتعاون؟</label>
-    <div class="rating-group" id="rCoop">
-      <button class="r-btn" onclick="pick('coop','جداً','yes',this)">جداً</button>
-      <button class="r-btn" onclick="pick('coop','أحياناً','partial',this)">أحياناً</button>
-      <button class="r-btn" onclick="pick('coop','لأ','no',this)">لأ</button>
-    </div>
-    <label style="margin-top:1rem;">ملاحظات</label>
-    <textarea id="reportNotes" placeholder="أي ملاحظات إضافية..."></textarea>
-    <button class="btn btn-primary" onclick="saveReport()" style="margin-top:1rem;">💾 حفظ والانتقال للتالي</button>
+    <div class="info-box">📋 يرجى ملء الاستطلاع بصدق — إجاباتك ستساعد في تطوير الخدمة</div>
+
+    <label>إيجابيات الخدمة</label>
+    <textarea id="sPositives" placeholder="ما الذي أعجبك في الخدمة هذا العام؟"></textarea>
+
+    <label>سلبيات الخدمة</label>
+    <textarea id="sNegatives" placeholder="ما الذي يحتاج إلى تحسين؟"></textarea>
+
+    <label>من تتوافر فيه سمات القائد الناجح (قوة — تعليم — حكمة — تدبير — تواضع — رعاية)</label>
+    <textarea id="sLeader" placeholder="اذكر اسم الشخص وما يتميز به..."></textarea>
+
+    <label>المواعيد التي تناسبك</label>
+    <textarea id="sSuitableTimes" placeholder="مثال: الجمعة مساءً، السبت صباحاً..."></textarea>
+
+    <label>المواعيد التي لا تناسبك</label>
+    <textarea id="sUnsuitableTimes" placeholder="مثال: الأحد صباحاً..."></textarea>
+
+    <button class="btn btn-primary" onclick="saveServantSurvey()" style="margin-top:1rem;">💾 إرسال الاستطلاع</button>
   </div>
 </div>
 
-<!-- ADD SERVANT MODAL -->
+<!-- ========== MODALS ========== -->
 <div class="modal-bg" id="addServantModal">
   <div class="modal">
-    <h3>إضافة خادم</h3>
+    <h3>إضافة خادم جديد</h3>
     <label>الاسم الكامل</label>
     <input type="text" id="newServantName" placeholder="مثال: بولا مجدي"/>
+    <label>اسم المستخدم (للدخول)</label>
+    <input type="text" id="newServantUser" placeholder="مثال: رقم الموبايل أو الاسم"/>
+    <label>كلمة المرور</label>
+    <input type="text" id="newServantPass" placeholder="مثال: 1234"/>
     <label>الدور / المهمة</label>
     <input type="text" id="newServantRole" placeholder="مثال: خادم فريق الترانيم"/>
     <div class="modal-btns">
@@ -222,11 +264,10 @@
   </div>
 </div>
 
-<!-- DELETE MODAL -->
 <div class="modal-bg" id="deleteModal">
   <div class="modal">
     <h3>تأكيد الحذف</h3>
-    <p style="font-size:13px;color:#777;">هتحذف الخادم ده وكل تقاريره. مش هترجع!</p>
+    <p style="font-size:13px;color:#777;">هتحذف الخادم ده وكل بياناته. مش هترجع!</p>
     <div class="modal-btns">
       <button class="btn btn-del" onclick="confirmDelete()">حذف</button>
       <button class="btn" onclick="closeModals()">إلغاء</button>
@@ -234,23 +275,37 @@
   </div>
 </div>
 
+<div class="modal-bg" id="surveyViewModal">
+  <div class="modal">
+    <h3 id="svModalName">استطلاع</h3>
+    <div id="svModalContent"></div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModals()">إغلاق</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
+// ========== DATA ==========
 let stages = JSON.parse(localStorage.getItem('ch_stages')||'[]');
 let servants = JSON.parse(localStorage.getItem('ch_servants')||'{}');
-let reports = JSON.parse(localStorage.getItem('ch_reports')||'{}');
+let adminReports = JSON.parse(localStorage.getItem('ch_adminReports')||'{}');
+let surveys = JSON.parse(localStorage.getItem('ch_surveys')||'{}');
 const SUPER = {user:'admin',pass:'1234'};
 let currentUser = null;
-let currentAdminStageId = null;
-let currentReport = {};
+let currentStageId = null;
 let deleteTarget = null;
 
 function persist(){
   localStorage.setItem('ch_stages',JSON.stringify(stages));
   localStorage.setItem('ch_servants',JSON.stringify(servants));
-  localStorage.setItem('ch_reports',JSON.stringify(reports));
+  localStorage.setItem('ch_adminReports',JSON.stringify(adminReports));
+  localStorage.setItem('ch_surveys',JSON.stringify(surveys));
 }
+
+// ========== UTILS ==========
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -259,32 +314,61 @@ function showPage(id){
 function toast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2200);
+  setTimeout(()=>t.classList.remove('show'),2500);
 }
+function closeModals(){
+  document.querySelectorAll('.modal-bg').forEach(m=>m.classList.remove('open'));
+}
+function toggleCheck(el){
+  const cb=el.querySelector('input[type=checkbox]');
+  cb.checked=!cb.checked;
+  el.classList.toggle('checked',cb.checked);
+}
+
+// ========== LOGIN ==========
 function doLogin(){
   const u=document.getElementById('loginUser').value.trim();
   const p=document.getElementById('loginPass').value;
   const err=document.getElementById('loginError');
+  // Super Admin
   if(u===SUPER.user&&p===SUPER.pass){
     currentUser={role:'super'};err.style.display='none';
     document.getElementById('superDate').textContent=new Date().toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
     renderSuperStages();showPage('superPage');return;
   }
+  // Admin
   const stage=stages.find(s=>s.user===u&&s.pass===p);
-  if(stage){currentUser={role:'admin',stageId:stage.id};currentAdminStageId=stage.id;err.style.display='none';loadAdminPage(stage.id);return;}
+  if(stage){
+    currentUser={role:'admin',stageId:stage.id};currentStageId=stage.id;err.style.display='none';
+    loadAdminPage(stage.id);return;
+  }
+  // Servant
+  let foundServant=null,foundStageId=null;
+  for(const sid of Object.keys(servants)){
+    const sv=servants[sid].find(s=>s.user===u&&s.pass===p);
+    if(sv){foundServant=sv;foundStageId=sid;break;}
+  }
+  if(foundServant){
+    currentUser={role:'servant',servantId:foundServant.id,stageId:foundStageId};
+    err.style.display='none';loadServantPage(foundServant,foundStageId);return;
+  }
   err.style.display='block';
 }
 function doLogout(){
-  currentUser=null;currentAdminStageId=null;
+  currentUser=null;currentStageId=null;
   document.getElementById('loginUser').value='';
   document.getElementById('loginPass').value='';
   showPage('loginPage');
 }
-function switchTab(id){
-  ['tabStages','tabReports','tabExport'].forEach(t=>document.getElementById(t).style.display=t===id?'block':'none');
-  document.querySelectorAll('.tab-bar .tab').forEach((t,i)=>t.classList.toggle('active',['tabStages','tabReports','tabExport'][i]===id));
-  if(id==='tabReports')renderAllReports();
-  if(id==='tabExport')renderExportByStage();
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+// ========== SUPER ADMIN ==========
+function switchSuperTab(id){
+  ['sTabStages','sTabReports','sTabSurveys','sTabExport'].forEach(t=>document.getElementById(t).style.display=t===id?'block':'none');
+  document.querySelectorAll('#superPage .tab').forEach((t,i)=>t.classList.toggle('active',['sTabStages','sTabReports','sTabSurveys','sTabExport'][i]===id));
+  if(id==='sTabReports')renderSuperReports();
+  if(id==='sTabSurveys')renderSuperSurveys();
+  if(id==='sTabExport')renderSuperExport();
 }
 function addStage(){
   const name=document.getElementById('newStageName').value.trim();
@@ -300,190 +384,334 @@ function addStage(){
   toast('تم إضافة المرحلة ✓');renderSuperStages();
 }
 function renderSuperStages(){
-  const el=document.getElementById('stagesList');
+  const el=document.getElementById('superStagesList');
   if(!stages.length){el.innerHTML='<p style="font-size:13px;color:#aaa;padding:0.5rem 0;">لا يوجد مراحل بعد.</p>';return;}
   el.innerHTML=stages.map(s=>{
     const svs=servants[s.id]||[];
-    const done=svs.filter(sv=>reports[sv.id]).length;
-    return `<div class="servant-item">
-      <div style="flex:1;min-width:120px;">
-        <div class="servant-name">${s.name}</div>
-        <div class="servant-meta">أمين: ${s.adminName} &nbsp;|&nbsp; ${done}/${svs.length} تقارير مكتملة</div>
+    const surveyed=svs.filter(sv=>surveys[sv.id]).length;
+    const hasReport=!!adminReports[s.id];
+    return `<div class="item">
+      <div style="flex:1;">
+        <div class="item-name">${s.name}</div>
+        <div class="item-meta">أمين: ${s.adminName} | خدام: ${svs.length} | استطلاعات: ${surveyed}/${svs.length} | تقرير الأمين: ${hasReport?'✅':'⏳'}</div>
       </div>
       <div class="actions-row">
-        <span class="badge badge-stage">${s.user}</span>
+        <span class="badge badge-blue">${s.user}</span>
         <button class="btn-del icon-btn" onclick="deleteStage('${s.id}')">🗑</button>
       </div>
     </div>`;
   }).join('');
 }
 function deleteStage(id){
-  if(!confirm('هتحذف المرحلة دي وكل خدامها وتقاريرها؟'))return;
+  if(!confirm('هتحذف المرحلة دي وكل بياناتها؟'))return;
   stages=stages.filter(s=>s.id!==id);
-  (servants[id]||[]).forEach(sv=>delete reports[sv.id]);
-  delete servants[id];persist();renderSuperStages();toast('تم الحذف');
+  (servants[id]||[]).forEach(sv=>{delete surveys[sv.id];});
+  delete servants[id];delete adminReports[id];persist();renderSuperStages();toast('تم الحذف');
 }
-function renderAllReports(){
-  const el=document.getElementById('allReportsList');
+function renderSuperReports(){
+  const el=document.getElementById('superReportsList');
+  if(!stages.length){el.innerHTML='<p style="font-size:13px;color:#aaa;">لا يوجد مراحل.</p>';return;}
+  el.innerHTML=stages.map(s=>{
+    const r=adminReports[s.id];
+    if(!r) return `<div class="card"><p style="font-weight:600;">${s.name}</p><p style="font-size:13px;color:#aaa;margin-top:5px;">لم يُرفع تقرير بعد</p></div>`;
+    return `<div class="card">
+      <p style="font-weight:600;margin-bottom:8px;">${s.name} <span class="badge badge-done">مكتمل</span></p>
+      <p style="font-size:12px;color:#777;">اسم الخدمة: ${r.serviceName||''}</p>
+      <p style="font-size:12px;color:#777;margin-top:4px;">إيجابيات: ${(r.positives||'').substring(0,80)}${(r.positives||'').length>80?'...':''}</p>
+      <p style="font-size:12px;color:#777;margin-top:4px;">سلبيات: ${(r.negatives||'').substring(0,80)}${(r.negatives||'').length>80?'...':''}</p>
+      <p style="font-size:12px;color:#777;margin-top:4px;">إمكانيات القائد: ${(r.leaderTraits||[]).join('، ')}</p>
+      <p style="font-size:11px;color:#aaa;margin-top:6px;">حُفظ: ${r.savedAt||''}</p>
+    </div>`;
+  }).join('');
+}
+function renderSuperSurveys(){
+  const el=document.getElementById('superSurveysList');
+  if(!stages.length){el.innerHTML='<p style="font-size:13px;color:#aaa;">لا يوجد مراحل.</p>';return;}
   let html='';
   stages.forEach(s=>{
     const svs=servants[s.id]||[];
-    html+=`<div class="card" style="margin-bottom:0.75rem;"><p style="font-size:14px;font-weight:600;margin-bottom:8px;">${s.name}</p>`;
+    html+=`<div class="card"><p style="font-weight:600;margin-bottom:8px;">${s.name}</p>`;
     if(!svs.length){html+='<p style="font-size:12px;color:#aaa;">لا يوجد خدام</p>';}
     svs.forEach(sv=>{
-      const r=reports[sv.id];
+      const sv_survey=surveys[sv.id];
       html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f0f0;">
         <span style="font-size:13px;">${sv.name} <span style="color:#aaa;font-size:11px;">${sv.role}</span></span>
-        <span class="badge ${r?'badge-done':'badge-pending'}">${r?'مكتمل':'معلق'}</span>
+        <div class="actions-row">
+          <span class="badge ${sv_survey?'badge-done':'badge-pending'}">${sv_survey?'مكتمل':'معلق'}</span>
+          ${sv_survey?`<button class="icon-btn" onclick="viewSurvey('${sv.id}','${sv.name}')">👁</button>`:''}
+        </div>
       </div>`;
     });
     html+='</div>';
   });
-  el.innerHTML=html||'<p style="font-size:13px;color:#aaa;">لا يوجد مراحل بعد.</p>';
+  el.innerHTML=html;
 }
-function renderExportByStage(){
-  const el=document.getElementById('exportByStage');
-  el.innerHTML=stages.map(s=>`
-    <div class="card" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;padding:0.85rem 1.25rem;">
+function renderSuperExport(){
+  document.getElementById('superExportByStage').innerHTML=stages.map(s=>`
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:0.85rem 1.25rem;margin-bottom:0.5rem;">
       <span style="font-size:14px;font-weight:600;">${s.name}</span>
-      <button class="icon-btn" onclick="exportStage('${s.id}')">⬇️ تصدير</button>
+      <div class="actions-row">
+        <button class="icon-btn" onclick="exportStageReport('${s.id}')">📋 تقرير الأمين</button>
+        <button class="icon-btn" onclick="exportStageSurveys('${s.id}')">📊 استطلاعات</button>
+      </div>
     </div>`).join('');
+}
+
+// ========== ADMIN ==========
+function switchAdminTab(id){
+  ['aTabReport','aTabServants','aTabSurveys'].forEach(t=>document.getElementById(t).style.display=t===id?'block':'none');
+  document.querySelectorAll('#adminPage .tab').forEach((t,i)=>t.classList.toggle('active',['aTabReport','aTabServants','aTabSurveys'][i]===id));
+  if(id==='aTabServants')renderAdminServants();
+  if(id==='aTabSurveys')renderAdminSurveys();
 }
 function loadAdminPage(stageId){
   const stage=stages.find(s=>s.id===stageId);
   if(!stage)return;
-  currentAdminStageId=stageId;
-  document.getElementById('adminPageTitle').textContent='لوحة أمين — '+stage.name;
-  document.getElementById('adminStageBadge').textContent='مرحلة '+stage.name+' | '+stage.adminName;
-  renderAdminServants();showPage('adminPage');
+  currentStageId=stageId;
+  document.getElementById('adminTitle').textContent='أمين — '+stage.name;
+  document.getElementById('adminSubtitle').textContent=stage.adminName;
+  loadAdminReport();
+  renderAdminServants();
+  switchAdminTab('aTabReport');
+  showPage('adminPage');
+}
+function loadAdminReport(){
+  const r=adminReports[currentStageId]||{};
+  document.getElementById('rServiceName').value=r.serviceName||'';
+  document.getElementById('rPositives').value=r.positives||'';
+  document.getElementById('rNegatives').value=r.negatives||'';
+  const traits=r.leaderTraits||[];
+  document.querySelectorAll('#leaderTraits .check-item').forEach(el=>{
+    const val=el.querySelector('input').value;
+    const checked=traits.includes(val);
+    el.querySelector('input').checked=checked;
+    el.classList.toggle('checked',checked);
+  });
+  buildServantTable();
+}
+function buildServantTable(){
+  const svs=servants[currentStageId]||[];
+  const r=adminReports[currentStageId]||{};
+  const rows=r.servantRows||{};
+  const tbody=document.getElementById('servantTableBody');
+  tbody.innerHTML=svs.map(sv=>{
+    const row=rows[sv.id]||{};
+    return `<tr>
+      <td>${sv.name}</td>
+      <td><input type="text" value="${row.attendance||''}" placeholder="%" onchange="updateServantRow('${sv.id}','attendance',this.value)"/></td>
+      <td><input type="text" value="${row.visits||''}" placeholder="0" onchange="updateServantRow('${sv.id}','visits',this.value)"/></td>
+      <td><input type="text" value="${row.lessons||''}" placeholder="0" onchange="updateServantRow('${sv.id}','lessons',this.value)"/></td>
+      <td><input type="text" value="${row.recommend||''}" placeholder="آه/لأ" onchange="updateServantRow('${sv.id}','recommend',this.value)"/></td>
+      <td><input type="text" value="${row.notes||''}" placeholder="..." onchange="updateServantRow('${sv.id}','notes',this.value)"/></td>
+    </tr>`;
+  }).join('');
+}
+function updateServantRow(svId,field,val){
+  if(!adminReports[currentStageId])adminReports[currentStageId]={servantRows:{}};
+  if(!adminReports[currentStageId].servantRows)adminReports[currentStageId].servantRows={};
+  if(!adminReports[currentStageId].servantRows[svId])adminReports[currentStageId].servantRows[svId]={};
+  adminReports[currentStageId].servantRows[svId][field]=val;
+  persist();
+}
+function saveAdminReport(){
+  const traits=[];
+  document.querySelectorAll('#leaderTraits .check-item input:checked').forEach(cb=>traits.push(cb.value));
+  if(!adminReports[currentStageId])adminReports[currentStageId]={servantRows:{}};
+  adminReports[currentStageId].serviceName=document.getElementById('rServiceName').value;
+  adminReports[currentStageId].positives=document.getElementById('rPositives').value;
+  adminReports[currentStageId].negatives=document.getElementById('rNegatives').value;
+  adminReports[currentStageId].leaderTraits=traits;
+  adminReports[currentStageId].savedAt=new Date().toLocaleString('ar-EG');
+  persist();toast('تم حفظ التقرير ✓');
 }
 function renderAdminServants(){
-  const svs=servants[currentAdminStageId]||[];
-  const done=svs.filter(sv=>reports[sv.id]).length;
+  const svs=servants[currentStageId]||[];
+  const surveyed=svs.filter(sv=>surveys[sv.id]).length;
   document.getElementById('adminStats').innerHTML=`
-    <div class="stat-box"><p class="s-label">إجمالي</p><p class="s-val">${svs.length}</p></div>
-    <div class="stat-box"><p class="s-label">مكتمل</p><p class="s-val" style="color:#3b6d11;">${done}</p></div>
-    <div class="stat-box"><p class="s-label">متبقي</p><p class="s-val" style="color:#854f0b;">${svs.length-done}</p></div>`;
+    <div class="stat-box"><p class="s-label">إجمالي الخدام</p><p class="s-val">${svs.length}</p></div>
+    <div class="stat-box"><p class="s-label">ملأوا الاستطلاع</p><p class="s-val" style="color:#3b6d11;">${surveyed}</p></div>
+    <div class="stat-box"><p class="s-label">لم يملأوا</p><p class="s-val" style="color:#854f0b;">${svs.length-surveyed}</p></div>`;
   const el=document.getElementById('adminServantList');
-  if(!svs.length){el.innerHTML='<p style="font-size:13px;color:#aaa;padding:0.5rem 0;">لا يوجد خدام. اضغط "إضافة خادم".</p>';return;}
+  if(!svs.length){el.innerHTML='<p style="font-size:13px;color:#aaa;">لا يوجد خدام. اضغط "إضافة خادم".</p>';return;}
   el.innerHTML=svs.map((sv,i)=>{
-    const done=!!reports[sv.id];
-    return `<div class="servant-item">
-      <div><div class="servant-name">${sv.name}</div><div class="servant-meta">${sv.role}</div></div>
+    const done=!!surveys[sv.id];
+    return `<div class="item">
+      <div><div class="item-name">${sv.name}</div><div class="item-meta">${sv.role} | 👤 ${sv.user}</div></div>
       <div class="actions-row">
-        <span class="badge ${done?'badge-done':'badge-pending'}">${done?'مكتمل':'معلق'}</span>
-        <button class="icon-btn" onclick="startReport(${i})">${done?'✏️':'📋'}</button>
+        <span class="badge ${done?'badge-done':'badge-pending'}">${done?'ملأ الاستطلاع':'لم يملأ'}</span>
+        ${done?`<button class="icon-btn" onclick="viewSurvey('${sv.id}','${sv.name}')">👁</button>`:''}
         <button class="btn-del icon-btn" onclick="askDelete(${i})">🗑</button>
       </div>
     </div>`;
   }).join('');
 }
-function showAddServant(){document.getElementById('addServantModal').classList.add('open');}
-function closeModals(){
-  document.getElementById('addServantModal').classList.remove('open');
-  document.getElementById('deleteModal').classList.remove('open');
+function renderAdminSurveys(){
+  const svs=servants[currentStageId]||[];
+  const el=document.getElementById('adminSurveysList');
+  if(!svs.length){el.innerHTML='<p style="font-size:13px;color:#aaa;">لا يوجد خدام بعد.</p>';return;}
+  const filled=svs.filter(sv=>surveys[sv.id]);
+  const notFilled=svs.filter(sv=>!surveys[sv.id]);
+  let html='';
+  if(filled.length){
+    html+=`<p class="section-title">ملأوا الاستطلاع (${filled.length})</p>`;
+    filled.forEach(sv=>{
+      html+=`<div class="item">
+        <div><div class="item-name">${sv.name}</div><div class="item-meta">${sv.role}</div></div>
+        <button class="icon-btn" onclick="viewSurvey('${sv.id}','${sv.name}')">👁 عرض</button>
+      </div>`;
+    });
+  }
+  if(notFilled.length){
+    html+=`<p class="section-title" style="margin-top:1rem;">لم يملأوا بعد (${notFilled.length})</p>`;
+    notFilled.forEach(sv=>{
+      html+=`<div class="item"><div class="item-name">${sv.name}</div><span class="badge badge-pending">معلق</span></div>`;
+    });
+  }
+  el.innerHTML=html;
 }
+function showAddServantModal(){document.getElementById('addServantModal').classList.add('open');}
 function saveNewServant(){
   const name=document.getElementById('newServantName').value.trim();
+  const user=document.getElementById('newServantUser').value.trim();
+  const pass=document.getElementById('newServantPass').value.trim();
   const role=document.getElementById('newServantRole').value.trim();
-  if(!name){toast('اكتب اسم الخادم');return;}
-  if(!servants[currentAdminStageId])servants[currentAdminStageId]=[];
-  servants[currentAdminStageId].push({id:'sv_'+Date.now(),name,role:role||'خادم'});
+  if(!name||!user||!pass){toast('الرجاء ملء الاسم واسم المستخدم وكلمة المرور');return;}
+  // check unique user
+  let taken=false;
+  Object.values(servants).forEach(arr=>arr.forEach(s=>{if(s.user===user)taken=true;}));
+  if(taken){toast('اسم المستخدم موجود بالفعل');return;}
+  if(!servants[currentStageId])servants[currentStageId]=[];
+  servants[currentStageId].push({id:'sv_'+Date.now(),name,user,pass,role:role||'خادم'});
   persist();closeModals();
-  document.getElementById('newServantName').value='';
-  document.getElementById('newServantRole').value='';
-  toast('تم إضافة الخادم ✓');renderAdminServants();
+  ['newServantName','newServantUser','newServantPass','newServantRole'].forEach(i=>document.getElementById(i).value='');
+  toast('تم إضافة الخادم ✓');renderAdminServants();buildServantTable();
 }
 function askDelete(idx){deleteTarget=idx;document.getElementById('deleteModal').classList.add('open');}
 function confirmDelete(){
   if(deleteTarget===null)return;
-  const sv=servants[currentAdminStageId][deleteTarget];
-  delete reports[sv.id];
-  servants[currentAdminStageId].splice(deleteTarget,1);
+  const sv=servants[currentStageId][deleteTarget];
+  delete surveys[sv.id];
+  servants[currentStageId].splice(deleteTarget,1);
   persist();closeModals();deleteTarget=null;
-  toast('تم الحذف');renderAdminServants();
+  toast('تم الحذف');renderAdminServants();buildServantTable();
 }
-function startReport(idx){
-  const svs=servants[currentAdminStageId];
-  const sv=svs[idx];
-  currentReport={idx,svId:sv.id};
-  const ex=reports[sv.id]||{};
-  document.getElementById('reportPersonName').textContent=sv.name;
-  document.getElementById('reportStepLabel').textContent=`${idx+1} من ${svs.length}`;
-  document.getElementById('progressFill').style.width=(idx/svs.length*100)+'%';
-  document.getElementById('reportNotes').value=ex.notes||'';
-  ['rAttendance','rRenew','rCoop'].forEach(g=>
-    document.querySelectorAll('#'+g+' .r-btn').forEach(b=>b.className='r-btn'));
-  if(ex.attendance){
-    const mapping={attendance:ex.attendance,renew:ex.renew,coop:ex.coop};
-    Object.entries(mapping).forEach(([field,val])=>{
-      const grpId=field==='attendance'?'rAttendance':field==='renew'?'rRenew':'rCoop';
-      document.querySelectorAll('#'+grpId+' .r-btn').forEach(b=>{
-        if(b.textContent.trim()===val){
-          const cls=b.onclick.toString().includes('yes')?'yes':b.onclick.toString().includes('no')?'no':'partial';
-          b.classList.add('sel-'+cls);
-        }
-      });
-    });
-    currentReport.attendance=ex.attendance;
-    currentReport.renew=ex.renew;
-    currentReport.coop=ex.coop;
-  }
-  showPage('reportPage');
-}
-function pick(field,val,cls,btn){
-  currentReport[field]=val;
-  const grp=btn.closest('.rating-group');
-  grp.querySelectorAll('.r-btn').forEach(b=>b.className='r-btn');
-  btn.classList.add('sel-'+cls);
-}
-function saveReport(){
-  currentReport.notes=document.getElementById('reportNotes').value;
-  currentReport.savedAt=new Date().toLocaleString('ar-EG');
-  reports[currentReport.svId]={...currentReport};
-  persist();toast('تم الحفظ ✓');
-  const svs=servants[currentAdminStageId];
-  const next=currentReport.idx+1;
-  if(next<svs.length)setTimeout(()=>startReport(next),500);
-  else setTimeout(()=>backToDash(),500);
-}
-function backToDash(){
-  if(currentUser?.role==='super'){renderSuperStages();showPage('superPage');}
-  else{renderAdminServants();showPage('adminPage');}
-}
-function buildCSV(stageId){
-  const svs=servants[stageId]||[];
-  const stage=stages.find(s=>s.id===stageId);
+function exportStageServants(){
+  const svs=servants[currentStageId]||[];
+  const stage=stages.find(s=>s.id===currentStageId);
+  const r=adminReports[currentStageId]||{};
+  const rows=r.servantRows||{};
   let csv='\uFEFF';
-  csv+='المرحلة,الاسم,الدور,الحضور,يكمل السنة الجاية,مساعد ومتعاون,ملاحظات,تاريخ الحفظ\n';
+  csv+='الاسم,الدور,نسبة الحضور,عدد مرات الافتقاد,عدد مرات تحضير الدرس,ترشيح للعام القادم,ملاحظات\n';
   svs.forEach(sv=>{
-    const r=reports[sv.id]||{};
-    csv+=`"${stage?.name||''}","${sv.name}","${sv.role}","${r.attendance||''}","${r.renew||''}","${r.coop||''}","${(r.notes||'').replace(/"/g,'""')}","${r.savedAt||''}"\n`;
+    const row=rows[sv.id]||{};
+    csv+=`"${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;
   });
-  return csv;
+  dl(csv,`خدام_${stage?.name||''}.csv`);
 }
-function exportStage(stageId){
+
+// ========== SERVANT ==========
+function loadServantPage(sv,stageId){
   const stage=stages.find(s=>s.id===stageId);
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([buildCSV(stageId)],{type:'text/csv;charset=utf-8;'}));
-  a.download=`تقارير_${stage?.name||'المرحلة'}.csv`;
-  a.click();toast('تم التصدير');
+  document.getElementById('servantPageName').textContent='أهلاً، '+sv.name;
+  document.getElementById('servantPageStage').textContent='خدمة: '+(stage?.name||'');
+  const existing=surveys[sv.id]||{};
+  document.getElementById('sPositives').value=existing.positives||'';
+  document.getElementById('sNegatives').value=existing.negatives||'';
+  document.getElementById('sLeader').value=existing.leader||'';
+  document.getElementById('sSuitableTimes').value=existing.suitableTimes||'';
+  document.getElementById('sUnsuitableTimes').value=existing.unsuitableTimes||'';
+  showPage('servantPage');
 }
-function exportAll(){
-  let csv='\uFEFF';
-  csv+='المرحلة,الاسم,الدور,الحضور,يكمل السنة الجاية,مساعد ومتعاون,ملاحظات,تاريخ الحفظ\n';
-  stages.forEach(s=>{
-    (servants[s.id]||[]).forEach(sv=>{
-      const r=reports[sv.id]||{};
-      csv+=`"${s.name}","${sv.name}","${sv.role}","${r.attendance||''}","${r.renew||''}","${r.coop||''}","${(r.notes||'').replace(/"/g,'""')}","${r.savedAt||''}"\n`;
-    });
-  });
+function saveServantSurvey(){
+  const svId=currentUser.servantId;
+  surveys[svId]={
+    positives:document.getElementById('sPositives').value,
+    negatives:document.getElementById('sNegatives').value,
+    leader:document.getElementById('sLeader').value,
+    suitableTimes:document.getElementById('sSuitableTimes').value,
+    unsuitableTimes:document.getElementById('sUnsuitableTimes').value,
+    savedAt:new Date().toLocaleString('ar-EG')
+  };
+  persist();toast('تم إرسال الاستطلاع ✓ شكراً لك!');
+}
+
+// ========== VIEW SURVEY ==========
+function viewSurvey(svId,name){
+  const s=surveys[svId];
+  if(!s){toast('لا يوجد استطلاع بعد');return;}
+  document.getElementById('svModalName').textContent='استطلاع — '+name;
+  document.getElementById('svModalContent').innerHTML=`
+    <div style="font-size:13px;">
+      <p style="margin-bottom:8px;"><strong>إيجابيات الخدمة:</strong><br/>${s.positives||'—'}</p>
+      <hr class="divider"/>
+      <p style="margin-bottom:8px;"><strong>سلبيات الخدمة:</strong><br/>${s.negatives||'—'}</p>
+      <hr class="divider"/>
+      <p style="margin-bottom:8px;"><strong>من تتوافر فيه سمات القائد:</strong><br/>${s.leader||'—'}</p>
+      <hr class="divider"/>
+      <p style="margin-bottom:8px;"><strong>المواعيد المناسبة:</strong><br/>${s.suitableTimes||'—'}</p>
+      <hr class="divider"/>
+      <p style="margin-bottom:8px;"><strong>المواعيد غير المناسبة:</strong><br/>${s.unsuitableTimes||'—'}</p>
+      <hr class="divider"/>
+      <p style="color:#aaa;font-size:11px;">تاريخ الإرسال: ${s.savedAt||''}</p>
+    </div>`;
+  document.getElementById('surveyViewModal').classList.add('open');
+}
+
+// ========== EXPORT ==========
+function dl(csv,name){
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
-  a.download='كل_التقارير.csv';
-  a.click();toast('تم تصدير كل التقارير');
+  a.download=name;a.click();toast('تم التصدير ✓');
 }
-document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+function exportStageReport(stageId){
+  const stage=stages.find(s=>s.id===stageId);
+  const r=adminReports[stageId]||{};
+  const svs=servants[stageId]||[];
+  const rows=r.servantRows||{};
+  let csv='\uFEFF';
+  csv+=`تقرير أمين الخدمة — ${stage?.name||''}\n`;
+  csv+=`اسم الخدمة,${r.serviceName||''}\n`;
+  csv+=`إيجابيات,"${(r.positives||'').replace(/"/g,'""')}"\n`;
+  csv+=`سلبيات,"${(r.negatives||'').replace(/"/g,'""')}"\n`;
+  csv+=`إمكانيات القائد,"${(r.leaderTraits||[]).join('، ')}"\n\n`;
+  csv+='اسم الخادم,نسبة الحضور,عدد مرات الافتقاد,عدد مرات تحضير الدرس,ترشيح للعام القادم,ملاحظات\n';
+  svs.forEach(sv=>{
+    const row=rows[sv.id]||{};
+    csv+=`"${sv.name}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;
+  });
+  dl(csv,`تقرير_أمين_${stage?.name||''}.csv`);
+}
+function exportStageSurveys(stageId){
+  const stage=stages.find(s=>s.id===stageId);
+  const svs=servants[stageId]||[];
+  let csv='\uFEFF';
+  csv+='اسم الخادم,الدور,إيجابيات الخدمة,سلبيات الخدمة,سمات القائد,المواعيد المناسبة,المواعيد غير المناسبة,تاريخ الإرسال\n';
+  svs.forEach(sv=>{
+    const s=surveys[sv.id]||{};
+    csv+=`"${sv.name}","${sv.role}","${(s.positives||'').replace(/"/g,'""')}","${(s.negatives||'').replace(/"/g,'""')}","${(s.leader||'').replace(/"/g,'""')}","${(s.suitableTimes||'').replace(/"/g,'""')}","${(s.unsuitableTimes||'').replace(/"/g,'""')}","${s.savedAt||''}"\n`;
+  });
+  dl(csv,`استطلاعات_${stage?.name||''}.csv`);
+}
+function exportAllReports(){
+  let csv='\uFEFF';
+  csv+='المرحلة,اسم الخدمة,إيجابيات,سلبيات,إمكانيات القائد,تاريخ الحفظ\n';
+  stages.forEach(s=>{
+    const r=adminReports[s.id]||{};
+    csv+=`"${s.name}","${r.serviceName||''}","${(r.positives||'').replace(/"/g,'""')}","${(r.negatives||'').replace(/"/g,'""')}","${(r.leaderTraits||[]).join('، ')}","${r.savedAt||''}"\n`;
+  });
+  dl(csv,'كل_تقارير_الأمناء.csv');
+}
+function exportAllSurveys(){
+  let csv='\uFEFF';
+  csv+='المرحلة,اسم الخادم,الدور,إيجابيات,سلبيات,سمات القائد,المواعيد المناسبة,المواعيد غير المناسبة,تاريخ الإرسال\n';
+  stages.forEach(s=>{
+    (servants[s.id]||[]).forEach(sv=>{
+      const sr=surveys[sv.id]||{};
+      csv+=`"${s.name}","${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${(sr.leader||'').replace(/"/g,'""')}","${(sr.suitableTimes||'').replace(/"/g,'""')}","${(sr.unsuitableTimes||'').replace(/"/g,'""')}","${sr.savedAt||''}"\n`;
+    });
+  });
+  dl(csv,'كل_استطلاعات_الخدام.csv');
+}
 </script>
 </body>
 </html>
