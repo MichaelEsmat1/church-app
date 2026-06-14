@@ -135,8 +135,10 @@ td input:focus{outline:none;background:#f0f8ff;border-radius:4px;padding:2px 4px
   <div id="sTabExport" style="display:none;">
     <div class="card">
       <p style="font-size:14px;color:#555;margin-bottom:1rem;">تصدير كل البيانات دفعة واحدة</p>
-      <button class="btn btn-success" onclick="exportAllReports()" style="margin-bottom:8px;">📊 تصدير تقارير الأمناء</button>
-      <button class="btn btn-success" onclick="exportAllSurveys()">📊 تصدير استطلاعات الخدام</button>
+      <button class="btn btn-success" onclick="exportMegaAll()" style="margin-bottom:8px;font-size:15px;">⬇️ تصدير كل شيء (ملف واحد)</button>
+      <hr class="divider"/>
+      <button class="btn btn-primary" onclick="exportAllReports()" style="margin-bottom:8px;">📋 تقارير الأمناء فقط</button>
+      <button class="btn btn-primary" onclick="exportAllSurveys()">📊 استطلاعات الخدام فقط</button>
     </div>
     <div id="superExportByStage"></div>
   </div>
@@ -241,7 +243,7 @@ td input:focus{outline:none;background:#f0f8ff;border-radius:4px;padding:2px 4px
     <label>المواعيد التي لا تناسبك</label>
     <textarea id="sUnsuitableTimes" placeholder="مثال: الأحد صباحاً..."></textarea>
 
-    <button class="btn btn-primary" onclick="saveServantSurvey()" style="margin-top:1rem;">💾 إرسال الاستطلاع</button>
+    <button class="btn btn-primary" id="submitSurveyBtn" onclick="saveServantSurvey()" style="margin-top:1rem;">💾 إرسال الاستطلاع</button>
   </div>
 </div>
 
@@ -620,6 +622,18 @@ function loadServantPage(sv,stageId){
   document.getElementById('sLeader').value=existing.leader||'';
   document.getElementById('sSuitableTimes').value=existing.suitableTimes||'';
   document.getElementById('sUnsuitableTimes').value=existing.unsuitableTimes||'';
+  const btn=document.getElementById('submitSurveyBtn');
+  if(existing.savedAt){
+    btn.textContent='✅ تم الإرسال';
+    btn.style.background='#3B6D11';
+    btn.style.borderColor='#3B6D11';
+    btn.disabled=false;
+  } else {
+    btn.textContent='💾 إرسال الاستطلاع';
+    btn.style.background='#185FA5';
+    btn.style.borderColor='#185FA5';
+    btn.disabled=false;
+  }
   showPage('servantPage');
 }
 function saveServantSurvey(){
@@ -632,7 +646,44 @@ function saveServantSurvey(){
     unsuitableTimes:document.getElementById('sUnsuitableTimes').value,
     savedAt:new Date().toLocaleString('ar-EG')
   };
-  persist();toast('تم إرسال الاستطلاع ✓ شكراً لك!');
+  persist();
+  toast('تم إرسال الاستطلاع ✓ شكراً لك!');
+  const btn=document.getElementById('submitSurveyBtn');
+  btn.textContent='✅ تم الإرسال';
+  btn.style.background='#3B6D11';
+  btn.style.borderColor='#3B6D11';
+  btn.disabled=true;
+  btn.style.opacity='1';
+}
+
+function exportMegaAll(){
+  // Sheet 1: تقارير الأمناء
+  let csv1='\uFEFF';
+  csv1+='=== تقارير الأمناء ===\n';
+  csv1+='المرحلة,اسم الخدمة,إيجابيات,سلبيات,إمكانيات القائد,تاريخ الحفظ\n';
+  stages.forEach(s=>{
+    const r=adminReports[s.id]||{};
+    csv1+=`"${s.name}","${r.serviceName||''}","${(r.positives||'').replace(/"/g,'""')}","${(r.negatives||'').replace(/"/g,'""')}","${(r.leaderTraits||[]).join('، ')}","${r.savedAt||''}"\n`;
+  });
+  csv1+='\n=== جداول الخدام (تقارير الأمناء) ===\n';
+  csv1+='المرحلة,اسم الخادم,الدور,نسبة الحضور,عدد مرات الافتقاد,عدد مرات تحضير الدرس,ترشيح للعام القادم,ملاحظات\n';
+  stages.forEach(s=>{
+    const r=adminReports[s.id]||{};
+    const rows=r.servantRows||{};
+    (servants[s.id]||[]).forEach(sv=>{
+      const row=rows[sv.id]||{};
+      csv1+=`"${s.name}","${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;
+    });
+  });
+  csv1+='\n=== استطلاعات الخدام ===\n';
+  csv1+='المرحلة,اسم الخادم,الدور,إيجابيات,سلبيات,سمات القائد,المواعيد المناسبة,المواعيد غير المناسبة,تاريخ الإرسال\n';
+  stages.forEach(s=>{
+    (servants[s.id]||[]).forEach(sv=>{
+      const sr=surveys[sv.id]||{};
+      csv1+=`"${s.name}","${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${(sr.leader||'').replace(/"/g,'""')}","${(sr.suitableTimes||'').replace(/"/g,'""')}","${(sr.unsuitableTimes||'').replace(/"/g,'""')}","${sr.savedAt||''}"\n`;
+    });
+  });
+  dl(csv1,'كل_البيانات_'+new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')+'.csv');
 }
 
 // ========== VIEW SURVEY ==========
