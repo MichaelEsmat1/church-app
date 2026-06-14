@@ -8,7 +8,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:system-ui,sans-serif;background:#f4f4f0;color:#1a1a1a;direction:rtl;min-height:100vh;}
-.page{display:none;padding:1.25rem;max-width:680px;margin:0 auto;}
+.page{display:none;padding:1.25rem;max-width:700px;margin:0 auto;}
 .page.active{display:block;}
 h1{font-size:20px;font-weight:600;}
 h2{font-size:17px;font-weight:600;}
@@ -21,10 +21,9 @@ textarea{min-height:80px;resize:vertical;}
 .btn:hover{background:#eee;}
 .btn:disabled{opacity:0.6;cursor:not-allowed;}
 .btn-primary{background:#185FA5;color:#fff;border-color:#185FA5;}
-.btn-primary:hover{background:#0C447C;}
+.btn-primary:hover:not(:disabled){background:#0C447C;}
 .btn-success{background:#3B6D11;color:#fff;border-color:#3B6D11;}
-.btn-success:hover{background:#27500A;}
-.btn-sm{width:auto;padding:5px 12px;margin-top:0;font-size:13px;}
+.btn-success:hover:not(:disabled){background:#27500A;}
 .btn-del{width:auto;padding:5px 10px;margin-top:0;font-size:13px;color:#a32d2d;border-color:#f0a0a0;background:#fff;}
 .btn-del:hover{background:#fcebeb;}
 .card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1.25rem;margin-bottom:1rem;}
@@ -44,12 +43,6 @@ textarea{min-height:80px;resize:vertical;}
 .badge-done{background:#eaf3de;color:#3b6d11;}
 .badge-pending{background:#faeeda;color:#854f0b;}
 .badge-blue{background:#e6f1fb;color:#185fa5;}
-.rating-group{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px;}
-.r-btn{padding:8px 18px;border-radius:99px;border:1.5px solid #ccc;background:#fff;cursor:pointer;font-size:14px;color:#555;font-family:inherit;transition:all 0.15s;font-weight:500;}
-.r-btn:hover{background:#f0f0f0;}
-.r-btn.sel-yes{background:#3B6D11;color:#fff;border-color:#3B6D11;}
-.r-btn.sel-no{background:#a32d2d;color:#fff;border-color:#a32d2d;}
-.r-btn.sel-partial{background:#854f0b;color:#fff;border-color:#854f0b;}
 .tab-bar{display:flex;gap:0;margin-bottom:1rem;border-bottom:1px solid #eee;overflow-x:auto;}
 .tab{padding:9px 14px;font-size:13px;cursor:pointer;border:none;background:none;color:#777;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;}
 .tab.active{color:#185FA5;border-bottom-color:#185FA5;font-weight:600;}
@@ -72,14 +65,31 @@ textarea{min-height:80px;resize:vertical;}
 .check-item:hover{background:#f5f5f5;}
 .check-item.checked{background:#eaf3de;border-color:#3B6D11;}
 .check-item input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:#3B6D11;}
-.check-item span{font-size:14px;}
 .info-box{background:#e6f1fb;border-radius:8px;padding:10px 13px;font-size:13px;color:#185fa5;margin-bottom:1rem;}
 .loading{text-align:center;padding:2rem;color:#777;font-size:14px;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:#f7f7f5;padding:8px 10px;text-align:right;font-weight:600;border:1px solid #eee;}
-td{padding:8px 10px;border:1px solid #eee;vertical-align:top;}
-td input{border:none;background:transparent;padding:0;font-size:13px;width:100%;}
-td input:focus{outline:none;background:#f0f8ff;border-radius:4px;padding:2px 4px;}
+th{background:#f7f7f5;padding:8px 6px;text-align:center;font-weight:600;border:1px solid #eee;font-size:12px;}
+th:first-child{text-align:right;}
+td{padding:7px 6px;border:1px solid #eee;vertical-align:middle;text-align:center;}
+td:first-child{text-align:right;font-weight:500;font-size:13px;white-space:nowrap;}
+td.report-input{text-align:right;}
+td.report-input input{border:none;background:transparent;padding:0;font-size:13px;width:100%;}
+td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;padding:2px 4px;}
+/* time table */
+.time-cell{cursor:pointer;transition:background 0.15s;user-select:none;}
+.time-cell:hover{opacity:0.75;}
+.time-cell.suitable{background:#eaf3de;color:#3b6d11;font-weight:600;}
+.time-cell.unsuitable{background:#fcebeb;color:#a32d2d;font-weight:600;}
+.time-cell.neutral{background:#fff;color:#aaa;}
+/* leader picker */
+.leader-block{border:1px solid #eee;border-radius:8px;padding:10px 12px;margin-bottom:8px;background:#f9f9f7;}
+.leader-block-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.leader-block-top select{flex:1;}
+.trait-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.trait-chip{padding:5px 12px;border-radius:99px;border:1.5px solid #ddd;background:#fff;font-size:12px;cursor:pointer;transition:all 0.15s;font-family:inherit;}
+.trait-chip.sel{background:#185FA5;color:#fff;border-color:#185FA5;}
+.add-leader-btn{width:100%;padding:7px;font-size:13px;cursor:pointer;border-radius:8px;border:1.5px dashed #ccc;background:#fff;color:#777;font-family:inherit;margin-top:4px;}
+.add-leader-btn:hover{background:#f5f5f5;}
 </style>
 </head>
 <body>
@@ -136,7 +146,7 @@ td input:focus{outline:none;background:#f0f8ff;border-radius:4px;padding:2px 4px
   <div id="sTabExport" style="display:none;">
     <div class="card">
       <p style="font-size:14px;color:#555;margin-bottom:1rem;">تصدير كل البيانات دفعة واحدة</p>
-      <button class="btn btn-success" onclick="exportMegaAll()" style="margin-bottom:8px;font-size:15px;">⬇️ تصدير كل شيء (ملف واحد)</button>
+      <button class="btn btn-success" onclick="exportMegaAll()" style="margin-bottom:8px;">⬇️ تصدير كل شيء (ملف واحد)</button>
       <hr class="divider"/>
       <button class="btn btn-primary" onclick="exportAllReports()" style="margin-bottom:8px;">📋 تقارير الأمناء فقط</button>
       <button class="btn btn-primary" onclick="exportAllSurveys()">📊 استطلاعات الخدام فقط</button>
@@ -145,7 +155,7 @@ td input:focus{outline:none;background:#f0f8ff;border-radius:4px;padding:2px 4px
   </div>
 </div>
 
-<!-- ADMIN -->
+<!-- ADMIN — أمين الخدمة (يشوف تقريره وجدول خدامه فقط) -->
 <div id="adminPage" class="page">
   <div class="header">
     <div>
@@ -157,7 +167,6 @@ td input:focus{outline:none;background:#f0f8ff;border-radius:4px;padding:2px 4px
   <div class="tab-bar">
     <button class="tab active" onclick="switchAdminTab('aTabReport')">تقريري</button>
     <button class="tab" onclick="switchAdminTab('aTabServants')">الخدام</button>
-    <button class="tab" onclick="switchAdminTab('aTabSurveys')">استطلاعات الخدام</button>
   </div>
   <div id="aTabReport">
     <div class="card">
@@ -181,7 +190,12 @@ td input:focus{outline:none;background:#f0f8ff;border-radius:4px;padding:2px 4px
       <p class="section-title">جدول تقرير الخدام</p>
       <div style="overflow-x:auto;">
         <table><thead><tr>
-          <th>اسم الخادم</th><th>نسبة الحضور</th><th>مرات الافتقاد</th><th>مرات تحضير الدرس</th><th>ترشيح للعام القادم</th><th>ملاحظات</th>
+          <th style="text-align:right;">اسم الخادم</th>
+          <th>نسبة الحضور</th>
+          <th>مرات الافتقاد</th>
+          <th>مرات تحضير الدرس</th>
+          <th>ترشيح للعام القادم</th>
+          <th>ملاحظات</th>
         </tr></thead><tbody id="servantTableBody"></tbody></table>
       </div>
       <button class="btn btn-primary" id="saveReportBtn" onclick="saveAdminReport()" style="margin-top:1rem;">💾 حفظ التقرير</button>
@@ -196,10 +210,9 @@ td input:focus{outline:none;background:#f0f8ff;border-radius:4px;padding:2px 4px
     <div id="adminServantList"></div>
     <button class="btn btn-success" onclick="exportStageServants()" style="margin-top:0.5rem;">📊 تصدير Excel</button>
   </div>
-  <div id="aTabSurveys" style="display:none;"><div id="adminSurveysList"></div></div>
 </div>
 
-<!-- SERVANT -->
+<!-- SERVANT — الخادم (يملا استطلاعه بسرية) -->
 <div id="servantPage" class="page">
   <div class="header">
     <div>
@@ -209,18 +222,42 @@ td input:focus{outline:none;background:#f0f8ff;border-radius:4px;padding:2px 4px
     <button class="icon-btn" onclick="doLogout()">🚪</button>
   </div>
   <div class="card">
-    <div class="info-box">📋 يرجى ملء الاستطلاع بصدق — إجاباتك ستساعد في تطوير الخدمة</div>
+    <div class="info-box">📋 إجاباتك سرية ولن يطلع عليها إلا الإدارة العليا فقط</div>
+
     <label>إيجابيات الخدمة</label>
     <textarea id="sPositives" placeholder="ما الذي أعجبك في الخدمة هذا العام؟"></textarea>
+
     <label>سلبيات الخدمة</label>
     <textarea id="sNegatives" placeholder="ما الذي يحتاج إلى تحسين؟"></textarea>
-    <label>من تتوافر فيه سمات القائد الناجح (قوة — تعليم — حكمة — تدبير — تواضع — رعاية)</label>
-    <textarea id="sLeader" placeholder="اذكر اسم الشخص وما يتميز به..."></textarea>
-    <label>المواعيد التي تناسبك</label>
-    <textarea id="sSuitableTimes" placeholder="مثال: الجمعة مساءً، السبت صباحاً..."></textarea>
-    <label>المواعيد التي لا تناسبك</label>
-    <textarea id="sUnsuitableTimes" placeholder="مثال: الأحد صباحاً..."></textarea>
-    <button class="btn btn-primary" id="submitSurveyBtn" onclick="saveServantSurvey()" style="margin-top:1rem;">💾 إرسال الاستطلاع</button>
+
+    <label style="margin-top:1.25rem;">من تتوافر فيه سمات القائد الناجح؟</label>
+    <p style="font-size:12px;color:#777;margin-bottom:8px;">اختر اسم الخادم ثم حدد ما يتميز به من الصفات</p>
+    <div id="leaderPickerSection"></div>
+    <button class="add-leader-btn" onclick="addLeaderRow()">+ إضافة شخص آخر</button>
+
+    <hr class="divider"/>
+
+    <label>جدول المواعيد</label>
+    <p style="font-size:12px;color:#777;margin-bottom:8px;">اضغط على الخانة مرة = مناسب 🟢 &nbsp;|&nbsp; مرتين = غير مناسب 🔴 &nbsp;|&nbsp; ثلاث مرات = محايد ⬜</p>
+    <div style="overflow-x:auto;">
+      <table id="timesTable">
+        <thead><tr>
+          <th style="text-align:right;">اليوم</th>
+          <th>8ص — 12م</th>
+          <th>12م — 4م</th>
+          <th>4م — 8م</th>
+          <th>8م — 12ل</th>
+        </tr></thead>
+        <tbody id="timesTableBody"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:16px;margin-top:8px;font-size:12px;flex-wrap:wrap;">
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:14px;background:#eaf3de;border:1px solid #3b6d11;border-radius:3px;display:inline-block;"></span>مناسب</span>
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:14px;background:#fcebeb;border:1px solid #a32d2d;border-radius:3px;display:inline-block;"></span>غير مناسب</span>
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:14px;background:#fff;border:1px solid #ddd;border-radius:3px;display:inline-block;"></span>محايد</span>
+    </div>
+
+    <button class="btn btn-primary" id="submitSurveyBtn" onclick="saveServantSurvey()" style="margin-top:1.25rem;">💾 إرسال الاستطلاع</button>
   </div>
 </div>
 
@@ -265,98 +302,47 @@ td input:focus{outline:none;background:#f0f8ff;border-radius:4px;padding:2px 4px
 <div class="toast" id="toast"></div>
 
 <script>
-const SUPABASE_URL = 'https://tporikleqmekhdriuepn.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwb3Jpa2xlcW1la2hkcml1ZXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NTAyMTMsImV4cCI6MjA5NzAyNjIxM30.u81rZB2d8B0KtbqZ72zGHmsP2Y-63vdSESc4NG05Itw';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_URL='https://tporikleqmekhdriuepn.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwb3Jpa2xlcW1la2hkcml1ZXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NTAyMTMsImV4cCI6MjA5NzAyNjIxM30.u81rZB2d8B0KtbqZ72zGHmsP2Y-63vdSESc4NG05Itw';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const SUPER={user:'admin',pass:'1234'};
+const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const SLOTS=['8ص-12م','12م-4م','4م-8م','8م-12ل'];
+const TRAITS=['قوة','تعليم','حكمة','تدبير','تواضع','رعاية'];
 
-const SUPER = {user:'admin',pass:'1234'};
-let currentUser = null;
-let currentStageId = null;
-let currentStageServants = [];
-let currentAdminReport = null;
-let deleteTarget = null;
-let allStages = [];
+let currentUser=null,currentStageId=null,currentStageServants=[],currentAdminReport=null,deleteTarget=null,allStages=[];
+let timesData={};// {day_slot: 'suitable'|'unsuitable'|'neutral'}
+let leaderData=[];// [{name,traits:[]}]
 
 // ===== UTILS =====
-function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0,0);
-}
-function toast(msg, type='success'){
-  const t=document.getElementById('toast');
-  t.textContent=msg;
-  t.className='toast show '+(type==='error'?'toast-error':'toast-success');
-  setTimeout(()=>t.classList.remove('show'),2500);
-}
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
+function toast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show toast-'+(type==='error'?'error':'success');setTimeout(()=>t.classList.remove('show'),2500);}
 function closeModals(){document.querySelectorAll('.modal-bg').forEach(m=>m.classList.remove('open'));}
-function toggleCheck(el){
-  const cb=el.querySelector('input[type=checkbox]');
-  cb.checked=!cb.checked;
-  el.classList.toggle('checked',cb.checked);
-}
-function setBtn(id,txt,disabled=false){
-  const b=document.getElementById(id);
-  if(b){b.textContent=txt;b.disabled=disabled;}
-}
+function toggleCheck(el){const cb=el.querySelector('input[type=checkbox]');cb.checked=!cb.checked;el.classList.toggle('checked',cb.checked);}
+function setBtn(id,txt,dis=false){const b=document.getElementById(id);if(b){b.textContent=txt;b.disabled=dis;}}
 
 // ===== LOGIN =====
 async function doLogin(){
   const u=document.getElementById('loginUser').value.trim();
   const p=document.getElementById('loginPass').value;
   const err=document.getElementById('loginError');
-  err.style.display='none';
-  setBtn('loginBtn','جاري الدخول...',true);
-
+  err.style.display='none';setBtn('loginBtn','جاري الدخول...',true);
   if(u===SUPER.user&&p===SUPER.pass){
     currentUser={role:'super'};
     document.getElementById('superDate').textContent=new Date().toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-    await loadSuperPage();
-    setBtn('loginBtn','دخول',false);
-    return;
+    await loadSuperPage();setBtn('loginBtn','دخول',false);return;
   }
-
-  // Check admin
-  const {data:stageData}=await sb.from('stages').select('*').eq('username',u).eq('password',p).single();
-  if(stageData){
-    currentUser={role:'admin',stageId:stageData.id};
-    currentStageId=stageData.id;
-    err.style.display='none';
-    await loadAdminPage(stageData);
-    setBtn('loginBtn','دخول',false);
-    return;
-  }
-
-  // Check servant
-  const {data:svData}=await sb.from('servants').select('*').eq('username',u).eq('password',p).single();
-  if(svData){
-    currentUser={role:'servant',servantId:svData.id,stageId:svData.stage_id};
-    err.style.display='none';
-    await loadServantPage(svData);
-    setBtn('loginBtn','دخول',false);
-    return;
-  }
-
-  err.style.display='block';
-  setBtn('loginBtn','دخول',false);
+  const {data:stg}=await sb.from('stages').select('*').eq('username',u).eq('password',p).single();
+  if(stg){currentUser={role:'admin',stageId:stg.id};currentStageId=stg.id;await loadAdminPage(stg);setBtn('loginBtn','دخول',false);return;}
+  const {data:sv}=await sb.from('servants').select('*').eq('username',u).eq('password',p).single();
+  if(sv){currentUser={role:'servant',servantId:sv.id,stageId:sv.stage_id};await loadServantPage(sv);setBtn('loginBtn','دخول',false);return;}
+  err.style.display='block';setBtn('loginBtn','دخول',false);
 }
-
-function doLogout(){
-  currentUser=null;currentStageId=null;currentStageServants=[];currentAdminReport=null;
-  document.getElementById('loginUser').value='';
-  document.getElementById('loginPass').value='';
-  showPage('loginPage');
-}
+function doLogout(){currentUser=null;currentStageId=null;currentStageServants=[];currentAdminReport=null;document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';showPage('loginPage');}
 document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
-// ===== SUPER ADMIN =====
-async function loadSuperPage(){
-  const {data}=await sb.from('stages').select('*').order('created_at');
-  allStages=data||[];
-  renderSuperStages();
-  showPage('superPage');
-}
-
+// ===== SUPER =====
+async function loadSuperPage(){const {data}=await sb.from('stages').select('*').order('created_at');allStages=data||[];renderSuperStages();showPage('superPage');}
 function switchSuperTab(id){
   ['sTabStages','sTabReports','sTabSurveys','sTabExport'].forEach(t=>document.getElementById(t).style.display=t===id?'block':'none');
   document.querySelectorAll('#superPage .tab').forEach((t,i)=>t.classList.toggle('active',['sTabStages','sTabReports','sTabSurveys','sTabExport'][i]===id));
@@ -364,55 +350,36 @@ function switchSuperTab(id){
   if(id==='sTabSurveys')renderSuperSurveys();
   if(id==='sTabExport')renderSuperExport();
 }
-
 async function addStage(){
   const name=document.getElementById('newStageName').value.trim();
   const aName=document.getElementById('newAdminName').value.trim();
   const aUser=document.getElementById('newAdminUser').value.trim();
   const aPass=document.getElementById('newAdminPass').value.trim();
   if(!name||!aUser||!aPass){toast('الرجاء ملء كل الحقول','error');return;}
-  const id='stage_'+Date.now();
-  const {error}=await sb.from('stages').insert({id,name,admin_name:aName||aUser,username:aUser,password:aPass});
+  const {error}=await sb.from('stages').insert({id:'stage_'+Date.now(),name,admin_name:aName||aUser,username:aUser,password:aPass});
   if(error){toast('خطأ: اسم المستخدم موجود بالفعل','error');return;}
   ['newStageName','newAdminName','newAdminUser','newAdminPass'].forEach(i=>document.getElementById(i).value='');
-  toast('تم إضافة المرحلة ✓');
-  await loadSuperPage();
+  toast('تم إضافة المرحلة ✓');await loadSuperPage();
 }
-
 function renderSuperStages(){
   const el=document.getElementById('superStagesList');
-  if(!allStages.length){el.innerHTML='<p style="font-size:13px;color:#aaa;padding:0.5rem 0;">لا يوجد مراحل بعد.</p>';return;}
-  el.innerHTML=allStages.map(s=>`
-    <div class="item">
-      <div style="flex:1;">
-        <div class="item-name">${s.name}</div>
-        <div class="item-meta">أمين: ${s.admin_name} | 👤 ${s.username}</div>
-      </div>
-      <div class="actions-row">
-        <span class="badge badge-blue">${s.username}</span>
-        <button class="btn-del icon-btn" onclick="deleteStage('${s.id}')">🗑</button>
-      </div>
-    </div>`).join('');
+  if(!allStages.length){el.innerHTML='<p style="font-size:13px;color:#aaa;">لا يوجد مراحل بعد.</p>';return;}
+  el.innerHTML=allStages.map(s=>`<div class="item">
+    <div style="flex:1;"><div class="item-name">${s.name}</div><div class="item-meta">أمين: ${s.admin_name} | 👤 ${s.username}</div></div>
+    <div class="actions-row"><span class="badge badge-blue">${s.username}</span><button class="btn-del icon-btn" onclick="deleteStage('${s.id}')">🗑</button></div>
+  </div>`).join('');
 }
-
-async function deleteStage(id){
-  if(!confirm('هتحذف المرحلة دي وكل بياناتها؟'))return;
-  await sb.from('stages').delete().eq('id',id);
-  toast('تم الحذف');
-  await loadSuperPage();
-}
+async function deleteStage(id){if(!confirm('هتحذف المرحلة دي وكل بياناتها؟'))return;await sb.from('stages').delete().eq('id',id);toast('تم الحذف');await loadSuperPage();}
 
 async function renderSuperReports(){
-  const el=document.getElementById('superReportsList');
-  el.innerHTML='<div class="loading">جاري التحميل...</div>';
-  const {data:reports}=await sb.from('admin_reports').select('*');
-  if(!allStages.length){el.innerHTML='<p style="font-size:13px;color:#aaa;">لا يوجد مراحل.</p>';return;}
+  const el=document.getElementById('superReportsList');el.innerHTML='<div class="loading">جاري التحميل...</div>';
+  const {data:reps}=await sb.from('admin_reports').select('*');
   el.innerHTML=allStages.map(s=>{
-    const r=reports?.find(r=>r.stage_id===s.id);
+    const r=(reps||[]).find(r=>r.stage_id===s.id);
     if(!r)return`<div class="card"><p style="font-weight:600;">${s.name}</p><p style="font-size:13px;color:#aaa;margin-top:5px;">لم يُرفع تقرير بعد</p></div>`;
     return`<div class="card">
       <p style="font-weight:600;margin-bottom:8px;">${s.name} <span class="badge badge-done">مكتمل</span></p>
-      <p style="font-size:13px;margin-top:4px;"><strong>اسم الخدمة:</strong> ${r.service_name||''}</p>
+      <p style="font-size:13px;"><strong>اسم الخدمة:</strong> ${r.service_name||''}</p>
       <p style="font-size:13px;margin-top:6px;"><strong>إيجابيات:</strong><br/>${r.positives||'—'}</p>
       <p style="font-size:13px;margin-top:6px;"><strong>سلبيات:</strong><br/>${r.negatives||'—'}</p>
       <p style="font-size:13px;margin-top:6px;"><strong>إمكانيات القائد:</strong> ${r.leader_traits||'—'}</p>
@@ -422,8 +389,7 @@ async function renderSuperReports(){
 }
 
 async function renderSuperSurveys(){
-  const el=document.getElementById('superSurveysList');
-  el.innerHTML='<div class="loading">جاري التحميل...</div>';
+  const el=document.getElementById('superSurveysList');el.innerHTML='<div class="loading">جاري التحميل...</div>';
   const {data:svs}=await sb.from('servants').select('*');
   const {data:survs}=await sb.from('surveys').select('*');
   let html='';
@@ -437,13 +403,13 @@ async function renderSuperSurveys(){
         <span style="font-size:13px;">${sv.name} <span style="color:#aaa;font-size:11px;">${sv.role}</span></span>
         <div class="actions-row">
           <span class="badge ${sur?'badge-done':'badge-pending'}">${sur?'مكتمل':'معلق'}</span>
-          ${sur?`<button class="icon-btn" onclick='showSurveyModal(${JSON.stringify(sur)},${JSON.stringify(sv.name)})'>👁</button>`:''}
+          ${sur?`<button class="icon-btn" onclick='viewSurvey(${JSON.stringify(sur)},${JSON.stringify(sv.name)})'>👁</button>`:''}
         </div>
       </div>`;
     });
     html+='</div>';
   });
-  el.innerHTML=html||'<p style="font-size:13px;color:#aaa;">لا يوجد بيانات.</p>';
+  el.innerHTML=html;
 }
 
 function renderSuperExport(){
@@ -465,18 +431,14 @@ async function loadAdminPage(stage){
   const {data}=await sb.from('servants').select('*').eq('stage_id',stage.id).order('created_at');
   currentStageServants=data||[];
   await loadAdminReportForm();
-  renderAdminServants();
   switchAdminTab('aTabReport');
   showPage('adminPage');
 }
-
 function switchAdminTab(id){
-  ['aTabReport','aTabServants','aTabSurveys'].forEach(t=>document.getElementById(t).style.display=t===id?'block':'none');
-  document.querySelectorAll('#adminPage .tab').forEach((t,i)=>t.classList.toggle('active',['aTabReport','aTabServants','aTabSurveys'][i]===id));
+  ['aTabReport','aTabServants'].forEach(t=>document.getElementById(t).style.display=t===id?'block':'none');
+  document.querySelectorAll('#adminPage .tab').forEach((t,i)=>t.classList.toggle('active',['aTabReport','aTabServants'][i]===id));
   if(id==='aTabServants')renderAdminServants();
-  if(id==='aTabSurveys')renderAdminSurveys();
 }
-
 async function loadAdminReportForm(){
   const {data:r}=await sb.from('admin_reports').select('*').eq('stage_id',currentStageId).single();
   currentAdminReport=r||null;
@@ -485,61 +447,35 @@ async function loadAdminReportForm(){
   document.getElementById('rNegatives').value=r?.negatives||'';
   const traits=(r?.leader_traits||'').split('،').map(t=>t.trim()).filter(Boolean);
   document.querySelectorAll('#leaderTraits .check-item').forEach(el=>{
-    const val=el.querySelector('input').value;
-    const checked=traits.includes(val);
-    el.querySelector('input').checked=checked;
-    el.classList.toggle('checked',checked);
+    const val=el.querySelector('input').value;const checked=traits.includes(val);
+    el.querySelector('input').checked=checked;el.classList.toggle('checked',checked);
   });
   buildServantTable(r?.servant_rows||{});
 }
-
 function buildServantTable(rows={}){
   document.getElementById('servantTableBody').innerHTML=currentStageServants.map(sv=>{
     const row=rows[sv.id]||{};
     return`<tr>
-      <td>${sv.name}</td>
-      <td><input type="text" value="${row.attendance||''}" placeholder="%" onchange="updateRow('${sv.id}','attendance',this.value)"/></td>
-      <td><input type="text" value="${row.visits||''}" placeholder="0" onchange="updateRow('${sv.id}','visits',this.value)"/></td>
-      <td><input type="text" value="${row.lessons||''}" placeholder="0" onchange="updateRow('${sv.id}','lessons',this.value)"/></td>
-      <td><input type="text" value="${row.recommend||''}" placeholder="آه/لأ" onchange="updateRow('${sv.id}','recommend',this.value)"/></td>
-      <td><input type="text" value="${row.notes||''}" placeholder="..." onchange="updateRow('${sv.id}','notes',this.value)"/></td>
+      <td class="report-input" style="text-align:right;font-weight:600;">${sv.name}</td>
+      <td class="report-input"><input type="text" value="${row.attendance||''}" placeholder="%" onchange="updateRow('${sv.id}','attendance',this.value)"/></td>
+      <td class="report-input"><input type="text" value="${row.visits||''}" placeholder="0" onchange="updateRow('${sv.id}','visits',this.value)"/></td>
+      <td class="report-input"><input type="text" value="${row.lessons||''}" placeholder="0" onchange="updateRow('${sv.id}','lessons',this.value)"/></td>
+      <td class="report-input"><input type="text" value="${row.recommend||''}" placeholder="آه/لأ" onchange="updateRow('${sv.id}','recommend',this.value)"/></td>
+      <td class="report-input"><input type="text" value="${row.notes||''}" placeholder="..." onchange="updateRow('${sv.id}','notes',this.value)"/></td>
     </tr>`;
   }).join('');
 }
-
 let pendingRows={};
-function updateRow(svId,field,val){
-  if(!pendingRows[svId])pendingRows[svId]={};
-  pendingRows[svId][field]=val;
-}
-
+function updateRow(svId,field,val){if(!pendingRows[svId])pendingRows[svId]={};pendingRows[svId][field]=val;}
 async function saveAdminReport(){
   setBtn('saveReportBtn','جاري الحفظ...',true);
-  const traits=[];
-  document.querySelectorAll('#leaderTraits .check-item input:checked').forEach(cb=>traits.push(cb.value));
-  const existingRows=currentAdminReport?.servant_rows||{};
-  const mergedRows={...existingRows,...pendingRows};
-  const payload={
-    stage_id:currentStageId,
-    service_name:document.getElementById('rServiceName').value,
-    positives:document.getElementById('rPositives').value,
-    negatives:document.getElementById('rNegatives').value,
-    leader_traits:traits.join('،'),
-    servant_rows:mergedRows,
-    saved_at:new Date().toLocaleString('ar-EG')
-  };
-  if(currentAdminReport){
-    await sb.from('admin_reports').update(payload).eq('stage_id',currentStageId);
-  } else {
-    payload.id='rep_'+Date.now();
-    await sb.from('admin_reports').insert(payload);
-  }
-  pendingRows={};
-  await loadAdminReportForm();
-  toast('تم حفظ التقرير ✓');
-  setBtn('saveReportBtn','💾 حفظ التقرير',false);
+  const traits=[];document.querySelectorAll('#leaderTraits .check-item input:checked').forEach(cb=>traits.push(cb.value));
+  const mergedRows={...(currentAdminReport?.servant_rows||{}),...pendingRows};
+  const payload={stage_id:currentStageId,service_name:document.getElementById('rServiceName').value,positives:document.getElementById('rPositives').value,negatives:document.getElementById('rNegatives').value,leader_traits:traits.join('،'),servant_rows:mergedRows,saved_at:new Date().toLocaleString('ar-EG')};
+  if(currentAdminReport){await sb.from('admin_reports').update(payload).eq('stage_id',currentStageId);}
+  else{payload.id='rep_'+Date.now();await sb.from('admin_reports').insert(payload);}
+  pendingRows={};await loadAdminReportForm();toast('تم حفظ التقرير ✓');setBtn('saveReportBtn','💾 حفظ التقرير',false);
 }
-
 async function renderAdminServants(){
   const {data}=await sb.from('servants').select('*').eq('stage_id',currentStageId).order('created_at');
   currentStageServants=data||[];
@@ -552,44 +488,16 @@ async function renderAdminServants(){
     <div class="stat-box"><p class="s-label">لم يملأوا</p><p class="s-val" style="color:#854f0b;">${currentStageServants.length-done}</p></div>`;
   const el=document.getElementById('adminServantList');
   if(!currentStageServants.length){el.innerHTML='<p style="font-size:13px;color:#aaa;">لا يوجد خدام. اضغط "إضافة خادم".</p>';return;}
-  el.innerHTML=currentStageServants.map((sv,i)=>{
-    const done=surveyedIds.has(sv.id);
-    return`<div class="item">
-      <div><div class="item-name">${sv.name}</div><div class="item-meta">${sv.role} | 👤 ${sv.username}</div></div>
-      <div class="actions-row">
-        <span class="badge ${done?'badge-done':'badge-pending'}">${done?'ملأ الاستطلاع':'لم يملأ'}</span>
-        <button class="btn-del icon-btn" onclick="askDelete('${sv.id}')">🗑</button>
-      </div>
-    </div>`;
-  }).join('');
+  el.innerHTML=currentStageServants.map((sv,i)=>`<div class="item">
+    <div><div class="item-name">${sv.name}</div><div class="item-meta">${sv.role} | 👤 ${sv.username}</div></div>
+    <div class="actions-row">
+      <span class="badge ${surveyedIds.has(sv.id)?'badge-done':'badge-pending'}">${surveyedIds.has(sv.id)?'ملأ الاستطلاع':'لم يملأ'}</span>
+      <button class="btn-del icon-btn" onclick="askDelete('${sv.id}')">🗑</button>
+    </div>
+  </div>`).join('');
   buildServantTable(currentAdminReport?.servant_rows||{});
 }
-
-async function renderAdminSurveys(){
-  const {data:survs}=await sb.from('surveys').select('*');
-  const el=document.getElementById('adminSurveysList');
-  const filled=currentStageServants.filter(sv=>(survs||[]).find(s=>s.servant_id===sv.id));
-  const notFilled=currentStageServants.filter(sv=>!(survs||[]).find(s=>s.servant_id===sv.id));
-  let html='';
-  if(filled.length){
-    html+=`<p class="section-title">ملأوا الاستطلاع (${filled.length})</p>`;
-    filled.forEach(sv=>{
-      const sur=(survs||[]).find(s=>s.servant_id===sv.id);
-      html+=`<div class="item">
-        <div><div class="item-name">${sv.name}</div><div class="item-meta">${sv.role}</div></div>
-        <button class="icon-btn" onclick='showSurveyModal(${JSON.stringify(sur)},${JSON.stringify(sv.name)})'>👁 عرض</button>
-      </div>`;
-    });
-  }
-  if(notFilled.length){
-    html+=`<p class="section-title" style="margin-top:1rem;">لم يملأوا بعد (${notFilled.length})</p>`;
-    notFilled.forEach(sv=>{html+=`<div class="item"><div class="item-name">${sv.name}</div><span class="badge badge-pending">معلق</span></div>`;});
-  }
-  el.innerHTML=html||'<p style="font-size:13px;color:#aaa;">لا يوجد بيانات.</p>';
-}
-
 function showAddServantModal(){document.getElementById('addServantModal').classList.add('open');}
-
 async function saveNewServant(){
   const name=document.getElementById('newServantName').value.trim();
   const user=document.getElementById('newServantUser').value.trim();
@@ -598,187 +506,181 @@ async function saveNewServant(){
   if(!name||!user||!pass){toast('الرجاء ملء الاسم واسم المستخدم وكلمة المرور','error');return;}
   const {error}=await sb.from('servants').insert({id:'sv_'+Date.now(),stage_id:currentStageId,name,username:user,password:pass,role:role||'خادم'});
   if(error){toast('خطأ: اسم المستخدم موجود بالفعل','error');return;}
-  closeModals();
-  ['newServantName','newServantUser','newServantPass','newServantRole'].forEach(i=>document.getElementById(i).value='');
-  toast('تم إضافة الخادم ✓');
-  await renderAdminServants();
+  closeModals();['newServantName','newServantUser','newServantPass','newServantRole'].forEach(i=>document.getElementById(i).value='');
+  toast('تم إضافة الخادم ✓');await renderAdminServants();
 }
-
 function askDelete(id){deleteTarget=id;document.getElementById('deleteModal').classList.add('open');}
-async function confirmDelete(){
-  if(!deleteTarget)return;
-  await sb.from('servants').delete().eq('id',deleteTarget);
-  closeModals();deleteTarget=null;
-  toast('تم الحذف');
-  await renderAdminServants();
-}
-
+async function confirmDelete(){if(!deleteTarget)return;await sb.from('servants').delete().eq('id',deleteTarget);closeModals();deleteTarget=null;toast('تم الحذف');await renderAdminServants();}
 async function exportStageServants(){
   const {data:r}=await sb.from('admin_reports').select('servant_rows').eq('stage_id',currentStageId).single();
-  const rows=r?.servant_rows||{};
-  let csv='\uFEFF';
-  csv+='الاسم,الدور,نسبة الحضور,مرات الافتقاد,مرات تحضير الدرس,ترشيح للعام القادم,ملاحظات\n';
-  currentStageServants.forEach(sv=>{
-    const row=rows[sv.id]||{};
-    csv+=`"${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;
-  });
+  const rows=r?.servant_rows||{};let csv='\uFEFF';
+  csv+='الاسم,الدور,نسبة الحضور,مرات الافتقاد,مرات تحضير الدرس,ترشيح,ملاحظات\n';
+  currentStageServants.forEach(sv=>{const row=rows[sv.id]||{};csv+=`"${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;});
   dl(csv,'خدام_المرحلة.csv');
 }
 
 // ===== SERVANT =====
 async function loadServantPage(sv){
   const {data:stage}=await sb.from('stages').select('name').eq('id',sv.stage_id).single();
+  // load all servants in same stage for leader picker
+  const {data:stageServants}=await sb.from('servants').select('id,name').eq('stage_id',sv.stage_id).order('name');
+  const othersInStage=(stageServants||[]).filter(s=>s.id!==sv.id);
   document.getElementById('servantPageName').textContent='أهلاً، '+sv.name;
   document.getElementById('servantPageStage').textContent='خدمة: '+(stage?.name||'');
   const {data:existing}=await sb.from('surveys').select('*').eq('servant_id',sv.id).single();
   document.getElementById('sPositives').value=existing?.positives||'';
   document.getElementById('sNegatives').value=existing?.negatives||'';
-  document.getElementById('sLeader').value=existing?.leader||'';
-  document.getElementById('sSuitableTimes').value=existing?.suitable_times||'';
-  document.getElementById('sUnsuitableTimes').value=existing?.unsuitable_times||'';
+  // times
+  timesData=existing?.times_data||{};
+  buildTimesTable();
+  // leader picker
+  leaderData=existing?.leader_data||[];
+  buildLeaderPicker(othersInStage);
   const btn=document.getElementById('submitSurveyBtn');
-  if(existing?.saved_at){
-    btn.textContent='✅ تم الإرسال — يمكنك التعديل وإعادة الإرسال';
-    btn.style.background='#3B6D11';btn.style.borderColor='#3B6D11';
-  } else {
-    btn.textContent='💾 إرسال الاستطلاع';
-    btn.style.background='#185FA5';btn.style.borderColor='#185FA5';
-  }
+  if(existing?.saved_at){btn.textContent='✅ تم الإرسال — يمكنك التعديل وإعادة الإرسال';btn.style.background='#3B6D11';btn.style.borderColor='#3B6D11';}
+  else{btn.textContent='💾 إرسال الاستطلاع';btn.style.background='#185FA5';btn.style.borderColor='#185FA5';}
+  // store for picker
+  window._stageServants=othersInStage;
   showPage('servantPage');
 }
+
+function buildTimesTable(){
+  const tbody=document.getElementById('timesTableBody');
+  tbody.innerHTML=DAYS.map(day=>`<tr>
+    <td>${day}</td>
+    ${SLOTS.map(slot=>{
+      const key=day+'_'+slot;
+      const state=timesData[key]||'neutral';
+      return`<td class="time-cell ${state}" onclick="cycleTime('${key}',this)">${state==='suitable'?'✓':state==='unsuitable'?'✗':''}</td>`;
+    }).join('')}
+  </tr>`).join('');
+}
+
+function cycleTime(key,cell){
+  const states=['neutral','suitable','unsuitable'];
+  const cur=timesData[key]||'neutral';
+  const next=states[(states.indexOf(cur)+1)%3];
+  timesData[key]=next;
+  cell.className='time-cell '+next;
+  cell.textContent=next==='suitable'?'✓':next==='unsuitable'?'✗':'';
+}
+
+function buildLeaderPicker(servants){
+  const sec=document.getElementById('leaderPickerSection');
+  if(!leaderData.length)leaderData=[{name:'',traits:[]}];
+  sec.innerHTML=leaderData.map((item,i)=>`
+    <div class="leader-block" id="lblock_${i}">
+      <div class="leader-block-top">
+        <select onchange="leaderData[${i}].name=this.value">
+          <option value="">— اختر اسم الخادم —</option>
+          ${servants.map(s=>`<option value="${s.name}" ${item.name===s.name?'selected':''}>${s.name}</option>`).join('')}
+        </select>
+        ${leaderData.length>1?`<button class="icon-btn btn-del" onclick="removeLeaderRow(${i})" style="margin-top:0;">✕</button>`:''}
+      </div>
+      <p style="font-size:12px;color:#777;margin-bottom:6px;">ما يتميز به:</p>
+      <div class="trait-chips">
+        ${TRAITS.map(t=>`<button class="trait-chip ${item.traits.includes(t)?'sel':''}" onclick="toggleTrait(${i},'${t}',this)">${t}</button>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function toggleTrait(idx,trait,btn){
+  if(leaderData[idx].traits.includes(trait)){leaderData[idx].traits=leaderData[idx].traits.filter(t=>t!==trait);btn.classList.remove('sel');}
+  else{leaderData[idx].traits.push(trait);btn.classList.add('sel');}
+}
+function addLeaderRow(){leaderData.push({name:'',traits:[]});buildLeaderPicker(window._stageServants||[]);}
+function removeLeaderRow(i){leaderData.splice(i,1);if(!leaderData.length)leaderData=[{name:'',traits:[]}];buildLeaderPicker(window._stageServants||[]);}
 
 async function saveServantSurvey(){
   const svId=currentUser.servantId;
   setBtn('submitSurveyBtn','جاري الإرسال...',true);
-  const payload={
-    servant_id:svId,
-    positives:document.getElementById('sPositives').value,
-    negatives:document.getElementById('sNegatives').value,
-    leader:document.getElementById('sLeader').value,
-    suitable_times:document.getElementById('sSuitableTimes').value,
-    unsuitable_times:document.getElementById('sUnsuitableTimes').value,
-    saved_at:new Date().toLocaleString('ar-EG')
-  };
+  const payload={servant_id:svId,positives:document.getElementById('sPositives').value,negatives:document.getElementById('sNegatives').value,leader_data:leaderData,times_data:timesData,saved_at:new Date().toLocaleString('ar-EG')};
   const {data:existing}=await sb.from('surveys').select('id').eq('servant_id',svId).single();
-  if(existing){
-    await sb.from('surveys').update(payload).eq('servant_id',svId);
-  } else {
-    payload.id='sur_'+Date.now();
-    await sb.from('surveys').insert(payload);
-  }
+  if(existing){await sb.from('surveys').update(payload).eq('servant_id',svId);}
+  else{payload.id='sur_'+Date.now();await sb.from('surveys').insert(payload);}
   toast('تم إرسال الاستطلاع ✓ شكراً لك!');
   const btn=document.getElementById('submitSurveyBtn');
   btn.textContent='✅ تم الإرسال — يمكنك التعديل وإعادة الإرسال';
-  btn.style.background='#3B6D11';btn.style.borderColor='#3B6D11';
-  btn.disabled=false;
+  btn.style.background='#3B6D11';btn.style.borderColor='#3B6D11';btn.disabled=false;
 }
 
-// ===== SURVEY VIEW =====
-function showSurveyModal(sur,name){
+// ===== VIEW SURVEY =====
+function viewSurvey(sur,name){
   document.getElementById('svModalName').textContent='استطلاع — '+name;
-  document.getElementById('svModalContent').innerHTML=`
-    <div style="font-size:13px;line-height:1.7;">
-      <p><strong>إيجابيات:</strong><br/>${sur.positives||'—'}</p><hr class="divider"/>
-      <p><strong>سلبيات:</strong><br/>${sur.negatives||'—'}</p><hr class="divider"/>
-      <p><strong>سمات القائد:</strong><br/>${sur.leader||'—'}</p><hr class="divider"/>
-      <p><strong>المواعيد المناسبة:</strong><br/>${sur.suitable_times||'—'}</p><hr class="divider"/>
-      <p><strong>المواعيد غير المناسبة:</strong><br/>${sur.unsuitable_times||'—'}</p><hr class="divider"/>
-      <p style="color:#aaa;font-size:11px;">تاريخ الإرسال: ${sur.saved_at||''}</p>
-    </div>`;
+  const ld=(sur.leader_data||[]).filter(l=>l.name).map(l=>`<li>${l.name}: ${l.traits.join('، ')||'—'}</li>`).join('');
+  const td=sur.times_data||{};
+  const timesRows=DAYS.map(day=>`<tr><td style="font-weight:600;padding:4px 6px;">${day}</td>${SLOTS.map(slot=>{const k=day+'_'+slot;const s=td[k]||'neutral';return`<td style="text-align:center;padding:4px;background:${s==='suitable'?'#eaf3de':s==='unsuitable'?'#fcebeb':'#fff'};color:${s==='suitable'?'#3b6d11':s==='unsuitable'?'#a32d2d':'#aaa'};">${s==='suitable'?'✓':s==='unsuitable'?'✗':'—'}</td>`;}).join('')}</tr>`).join('');
+  document.getElementById('svModalContent').innerHTML=`<div style="font-size:13px;line-height:1.8;">
+    <p><strong>إيجابيات:</strong><br/>${sur.positives||'—'}</p>
+    <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
+    <p><strong>سلبيات:</strong><br/>${sur.negatives||'—'}</p>
+    <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
+    <p><strong>القادة المقترحون:</strong></p>
+    ${ld?`<ul style="margin:4px 0 0 16px;">${ld}</ul>`:'<p>—</p>'}
+    <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
+    <p><strong>جدول المواعيد:</strong></p>
+    <div style="overflow-x:auto;margin-top:6px;"><table style="font-size:12px;width:100%;">
+      <tr><th style="padding:4px;">اليوم</th>${SLOTS.map(s=>`<th style="padding:4px;text-align:center;">${s}</th>`).join('')}</tr>
+      ${timesRows}
+    </table></div>
+    <p style="color:#aaa;font-size:11px;margin-top:8px;">تاريخ الإرسال: ${sur.saved_at||''}</p>
+  </div>`;
   document.getElementById('surveyViewModal').classList.add('open');
 }
 
 // ===== EXPORT =====
-function dl(csv,name){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
-  a.download=name;a.click();toast('تم التصدير ✓');
-}
+function dl(csv,name){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download=name;a.click();toast('تم التصدير ✓');}
 
 async function exportAllReports(){
-  const {data:reports}=await sb.from('admin_reports').select('*');
-  let csv='\uFEFF';
-  csv+='المرحلة,اسم الخدمة,إيجابيات,سلبيات,إمكانيات القائد,تاريخ الحفظ\n';
-  allStages.forEach(s=>{
-    const r=(reports||[]).find(r=>r.stage_id===s.id)||{};
-    csv+=`"${s.name}","${r.service_name||''}","${(r.positives||'').replace(/"/g,'""')}","${(r.negatives||'').replace(/"/g,'""')}","${r.leader_traits||''}","${r.saved_at||''}"\n`;
-  });
+  const {data:reps}=await sb.from('admin_reports').select('*');
+  let csv='\uFEFF';csv+='المرحلة,اسم الخدمة,إيجابيات,سلبيات,إمكانيات القائد,تاريخ الحفظ\n';
+  allStages.forEach(s=>{const r=(reps||[]).find(r=>r.stage_id===s.id)||{};csv+=`"${s.name}","${r.service_name||''}","${(r.positives||'').replace(/"/g,'""')}","${(r.negatives||'').replace(/"/g,'""')}","${r.leader_traits||''}","${r.saved_at||''}"\n`;});
   dl(csv,'تقارير_الأمناء.csv');
 }
 
 async function exportAllSurveys(){
   const {data:svs}=await sb.from('servants').select('*');
   const {data:survs}=await sb.from('surveys').select('*');
-  let csv='\uFEFF';
-  csv+='المرحلة,اسم الخادم,الدور,إيجابيات,سلبيات,سمات القائد,المواعيد المناسبة,المواعيد غير المناسبة,تاريخ الإرسال\n';
+  let csv='\uFEFF';csv+='المرحلة,اسم الخادم,الدور,إيجابيات,سلبيات,القادة المقترحون,تاريخ الإرسال\n';
   allStages.forEach(s=>{
     (svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{
       const sr=(survs||[]).find(sr=>sr.servant_id===sv.id)||{};
-      csv+=`"${s.name}","${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${(sr.leader||'').replace(/"/g,'""')}","${(sr.suitable_times||'').replace(/"/g,'""')}","${(sr.unsuitable_times||'').replace(/"/g,'""')}","${sr.saved_at||''}"\n`;
+      const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');
+      csv+=`"${s.name}","${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.saved_at||''}"\n`;
     });
   });
   dl(csv,'استطلاعات_الخدام.csv');
 }
 
 async function exportMegaAll(){
-  const {data:reports}=await sb.from('admin_reports').select('*');
+  const {data:reps}=await sb.from('admin_reports').select('*');
   const {data:svs}=await sb.from('servants').select('*');
   const {data:survs}=await sb.from('surveys').select('*');
   let csv='\uFEFF';
-  csv+='=== تقارير الأمناء ===\n';
-  csv+='المرحلة,اسم الخدمة,إيجابيات,سلبيات,إمكانيات القائد,تاريخ الحفظ\n';
-  allStages.forEach(s=>{
-    const r=(reports||[]).find(r=>r.stage_id===s.id)||{};
-    csv+=`"${s.name}","${r.service_name||''}","${(r.positives||'').replace(/"/g,'""')}","${(r.negatives||'').replace(/"/g,'""')}","${r.leader_traits||''}","${r.saved_at||''}"\n`;
-  });
-  csv+='\n=== جداول الخدام (من تقارير الأمناء) ===\n';
-  csv+='المرحلة,اسم الخادم,الدور,نسبة الحضور,مرات الافتقاد,مرات تحضير الدرس,ترشيح,ملاحظات\n';
-  allStages.forEach(s=>{
-    const r=(reports||[]).find(r=>r.stage_id===s.id)||{};
-    const rows=r.servant_rows||{};
-    (svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{
-      const row=rows[sv.id]||{};
-      csv+=`"${s.name}","${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;
-    });
-  });
-  csv+='\n=== استطلاعات الخدام ===\n';
-  csv+='المرحلة,اسم الخادم,الدور,إيجابيات,سلبيات,سمات القائد,المواعيد المناسبة,المواعيد غير المناسبة,تاريخ الإرسال\n';
-  allStages.forEach(s=>{
-    (svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{
-      const sr=(survs||[]).find(sr=>sr.servant_id===sv.id)||{};
-      csv+=`"${s.name}","${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${(sr.leader||'').replace(/"/g,'""')}","${(sr.suitable_times||'').replace(/"/g,'""')}","${(sr.unsuitable_times||'').replace(/"/g,'""')}","${sr.saved_at||''}"\n`;
-    });
-  });
-  dl(csv,'كل_البيانات_'+new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')+'.csv');
+  csv+='=== تقارير الأمناء ===\nالمرحلة,اسم الخدمة,إيجابيات,سلبيات,إمكانيات القائد,تاريخ الحفظ\n';
+  allStages.forEach(s=>{const r=(reps||[]).find(r=>r.stage_id===s.id)||{};csv+=`"${s.name}","${r.service_name||''}","${(r.positives||'').replace(/"/g,'""')}","${(r.negatives||'').replace(/"/g,'""')}","${r.leader_traits||''}","${r.saved_at||''}"\n`;});
+  csv+='\n=== جداول الخدام ===\nالمرحلة,اسم الخادم,الدور,نسبة الحضور,مرات الافتقاد,مرات تحضير الدرس,ترشيح,ملاحظات\n';
+  allStages.forEach(s=>{const r=(reps||[]).find(r=>r.stage_id===s.id)||{};const rows=r.servant_rows||{};(svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{const row=rows[sv.id]||{};csv+=`"${s.name}","${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;});});
+  csv+='\n=== استطلاعات الخدام ===\nالمرحلة,اسم الخادم,الدور,إيجابيات,سلبيات,القادة المقترحون,تاريخ الإرسال\n';
+  allStages.forEach(s=>{(svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{const sr=(survs||[]).find(sr=>sr.servant_id===sv.id)||{};const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');csv+=`"${s.name}","${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.saved_at||''}"\n`;});});
+  dl(csv,'كل_البيانات.csv');
 }
 
 async function exportStageReport(stageId,stageName){
   const {data:r}=await sb.from('admin_reports').select('*').eq('stage_id',stageId).single();
   const {data:svs}=await sb.from('servants').select('*').eq('stage_id',stageId);
-  const rows=r?.servant_rows||{};
-  let csv='\uFEFF';
-  csv+=`تقرير أمين الخدمة — ${stageName}\n`;
-  csv+=`اسم الخدمة,"${r?.service_name||''}"\n`;
-  csv+=`إيجابيات,"${(r?.positives||'').replace(/"/g,'""')}"\n`;
-  csv+=`سلبيات,"${(r?.negatives||'').replace(/"/g,'""')}"\n`;
-  csv+=`إمكانيات القائد,"${r?.leader_traits||''}"\n\n`;
+  const rows=r?.servant_rows||{};let csv='\uFEFF';
+  csv+=`تقرير أمين الخدمة — ${stageName}\nاسم الخدمة,"${r?.service_name||''}"\nإيجابيات,"${(r?.positives||'').replace(/"/g,'""')}"\nسلبيات,"${(r?.negatives||'').replace(/"/g,'""')}"\nإمكانيات القائد,"${r?.leader_traits||''}"\n\n`;
   csv+='اسم الخادم,الدور,نسبة الحضور,مرات الافتقاد,مرات تحضير الدرس,ترشيح,ملاحظات\n';
-  (svs||[]).forEach(sv=>{
-    const row=rows[sv.id]||{};
-    csv+=`"${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;
-  });
+  (svs||[]).forEach(sv=>{const row=rows[sv.id]||{};csv+=`"${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;});
   dl(csv,`تقرير_${stageName}.csv`);
 }
 
 async function exportStageSurveys(stageId,stageName){
   const {data:svs}=await sb.from('servants').select('*').eq('stage_id',stageId);
   const {data:survs}=await sb.from('surveys').select('*');
-  let csv='\uFEFF';
-  csv+='اسم الخادم,الدور,إيجابيات,سلبيات,سمات القائد,المواعيد المناسبة,المواعيد غير المناسبة,تاريخ الإرسال\n';
-  (svs||[]).forEach(sv=>{
-    const sr=(survs||[]).find(s=>s.servant_id===sv.id)||{};
-    csv+=`"${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${(sr.leader||'').replace(/"/g,'""')}","${(sr.suitable_times||'').replace(/"/g,'""')}","${(sr.unsuitable_times||'').replace(/"/g,'""')}","${sr.saved_at||''}"\n`;
-  });
+  let csv='\uFEFF';csv+='اسم الخادم,الدور,إيجابيات,سلبيات,القادة المقترحون,تاريخ الإرسال\n';
+  (svs||[]).forEach(sv=>{const sr=(survs||[]).find(s=>s.servant_id===sv.id)||{};const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');csv+=`"${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.saved_at||''}"\n`;});
   dl(csv,`استطلاعات_${stageName}.csv`);
 }
 </script>
