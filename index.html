@@ -178,14 +178,9 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
       <label>سلبيات الخدمة (يجب أن تُعالج العام القادم)</label>
       <textarea id="rNegatives" placeholder="اكتب سلبيات الخدمة..."></textarea>
       <label>من تتوافر فيه إمكانيات القائد الناجح</label>
-      <div class="check-group" id="leaderTraits">
-        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="قوة"/> <span>💪 قوة</span></label>
-        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="تعليم"/> <span>📚 تعليم</span></label>
-        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="حكمة"/> <span>🧠 حكمة</span></label>
-        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="تدبير"/> <span>📋 تدبير</span></label>
-        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="تواضع"/> <span>🙏 تواضع</span></label>
-        <label class="check-item" onclick="toggleCheck(this)"><input type="checkbox" value="رعاية"/> <span>❤️ رعاية</span></label>
-      </div>
+      <p style="font-size:12px;color:#777;margin-bottom:8px;">اختر اسم الخادم ثم حدد ما يتميز به من الصفات</p>
+      <div id="adminLeaderPickerSection"></div>
+      <button class="add-leader-btn" onclick="addAdminLeaderRow()">+ إضافة شخص آخر</button>
       <hr class="divider"/>
       <p class="section-title">جدول تقرير الخدام</p>
       <div style="overflow-x:auto;">
@@ -312,7 +307,8 @@ const TRAITS=['قوة','تعليم','حكمة','تدبير','تواضع','رعا
 
 let currentUser=null,currentStageId=null,currentStageServants=[],currentAdminReport=null,deleteTarget=null,allStages=[];
 let timesData={};// {day_slot: 'suitable'|'unsuitable'|'neutral'}
-let leaderData=[];// [{name,traits:[]}]
+let leaderData=[];// servant survey leader picker
+let adminLeaderData=[];// admin report leader picker
 
 // ===== UTILS =====
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
@@ -445,11 +441,8 @@ async function loadAdminReportForm(){
   document.getElementById('rServiceName').value=r?.service_name||'';
   document.getElementById('rPositives').value=r?.positives||'';
   document.getElementById('rNegatives').value=r?.negatives||'';
-  const traits=(r?.leader_traits||'').split('،').map(t=>t.trim()).filter(Boolean);
-  document.querySelectorAll('#leaderTraits .check-item').forEach(el=>{
-    const val=el.querySelector('input').value;const checked=traits.includes(val);
-    el.querySelector('input').checked=checked;el.classList.toggle('checked',checked);
-  });
+  adminLeaderData=r?.leader_data||[];
+  buildAdminLeaderPicker();
   buildServantTable(r?.servant_rows||{});
 }
 function buildServantTable(rows={}){
@@ -469,9 +462,8 @@ let pendingRows={};
 function updateRow(svId,field,val){if(!pendingRows[svId])pendingRows[svId]={};pendingRows[svId][field]=val;}
 async function saveAdminReport(){
   setBtn('saveReportBtn','جاري الحفظ...',true);
-  const traits=[];document.querySelectorAll('#leaderTraits .check-item input:checked').forEach(cb=>traits.push(cb.value));
   const mergedRows={...(currentAdminReport?.servant_rows||{}),...pendingRows};
-  const payload={stage_id:currentStageId,service_name:document.getElementById('rServiceName').value,positives:document.getElementById('rPositives').value,negatives:document.getElementById('rNegatives').value,leader_traits:traits.join('،'),servant_rows:mergedRows,saved_at:new Date().toLocaleString('ar-EG')};
+  const payload={stage_id:currentStageId,service_name:document.getElementById('rServiceName').value,positives:document.getElementById('rPositives').value,negatives:document.getElementById('rNegatives').value,leader_data:adminLeaderData,servant_rows:mergedRows,saved_at:new Date().toLocaleString('ar-EG')};
   if(currentAdminReport){await sb.from('admin_reports').update(payload).eq('stage_id',currentStageId);}
   else{payload.id='rep_'+Date.now();await sb.from('admin_reports').insert(payload);}
   pendingRows={};await loadAdminReportForm();toast('تم حفظ التقرير ✓');setBtn('saveReportBtn','💾 حفظ التقرير',false);
@@ -564,6 +556,31 @@ function cycleTime(key,cell){
   cell.className='time-cell '+next;
   cell.textContent=next==='suitable'?'✓':next==='unsuitable'?'✗':'';
 }
+
+function buildAdminLeaderPicker(){
+  const sec=document.getElementById('adminLeaderPickerSection');
+  if(!adminLeaderData.length)adminLeaderData=[{name:'',traits:[]}];
+  sec.innerHTML=adminLeaderData.map((item,i)=>`
+    <div class="leader-block" id="alblock_${i}">
+      <div class="leader-block-top">
+        <select onchange="adminLeaderData[${i}].name=this.value">
+          <option value="">— اختر اسم الخادم —</option>
+          ${currentStageServants.map(s=>`<option value="${s.name}" ${item.name===s.name?'selected':''}>${s.name}</option>`).join('')}
+        </select>
+        ${adminLeaderData.length>1?`<button class="icon-btn btn-del" onclick="removeAdminLeaderRow(${i})" style="margin-top:0;">✕</button>`:''}
+      </div>
+      <p style="font-size:12px;color:#777;margin-bottom:6px;">ما يتميز به:</p>
+      <div class="trait-chips">
+        ${TRAITS.map(t=>`<button class="trait-chip ${item.traits.includes(t)?'sel':''}" onclick="toggleAdminTrait(${i},'${t}',this)">${t}</button>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function toggleAdminTrait(idx,trait,btn){
+  if(adminLeaderData[idx].traits.includes(trait)){adminLeaderData[idx].traits=adminLeaderData[idx].traits.filter(t=>t!==trait);btn.classList.remove('sel');}
+  else{adminLeaderData[idx].traits.push(trait);btn.classList.add('sel');}
+}
+function addAdminLeaderRow(){adminLeaderData.push({name:'',traits:[]});buildAdminLeaderPicker();}
+function removeAdminLeaderRow(i){adminLeaderData.splice(i,1);if(!adminLeaderData.length)adminLeaderData=[{name:'',traits:[]}];buildAdminLeaderPicker();}
 
 function buildLeaderPicker(servants){
   const sec=document.getElementById('leaderPickerSection');
