@@ -1,1 +1,804 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>كنيسة الملاك والروماني — نظام الخدمة</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,sans-serif;background:#f4f4f0;color:#1a1a1a;direction:rtl;min-height:100vh;}
+.page{display:none;padding:1.25rem;max-width:700px;margin:0 auto;}
+.page.active{display:block;}
+h1{font-size:20px;font-weight:600;}
+h2{font-size:17px;font-weight:600;}
+label{font-size:13px;color:#555;display:block;margin-bottom:5px;margin-top:12px;}
+label:first-of-type{margin-top:0;}
+input,select,textarea{width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;color:#1a1a1a;outline:none;transition:border-color 0.15s;}
+input:focus,select:focus,textarea:focus{border-color:#185FA5;}
+textarea{min-height:80px;resize:vertical;}
+.btn{width:100%;margin-top:1rem;padding:10px;font-size:14px;cursor:pointer;border-radius:8px;border:1px solid #ccc;background:#fff;color:#1a1a1a;font-family:inherit;transition:all 0.15s;}
+.btn:hover{background:#eee;}
+.btn:disabled{opacity:0.6;cursor:not-allowed;}
+.btn-primary{background:#185FA5;color:#fff;border-color:#185FA5;}
+.btn-primary:hover:not(:disabled){background:#0C447C;}
+.btn-success{background:#3B6D11;color:#fff;border-color:#3B6D11;}
+.btn-success:hover:not(:disabled){background:#27500A;}
+.btn-del{width:auto;padding:5px 10px;margin-top:0;font-size:13px;color:#a32d2d;border-color:#f0a0a0;background:#fff;}
+.btn-del:hover{background:#fcebeb;}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1.25rem;margin-bottom:1rem;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid #eee;}
+.icon-btn{background:#fff;border:1px solid #ddd;border-radius:8px;padding:6px 11px;cursor:pointer;color:#555;font-size:13px;display:inline-flex;align-items:center;gap:5px;font-family:inherit;}
+.icon-btn:hover{background:#f5f5f5;}
+.logo-area{text-align:center;padding:1.5rem 0 1.25rem;}
+.logo-circle{width:64px;height:64px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;margin:0 auto 0.75rem;font-size:28px;}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem;}
+.stat-box{background:#f7f7f5;border-radius:8px;padding:10px;text-align:center;border:1px solid #eee;}
+.stat-box .s-label{font-size:11px;color:#777;margin-bottom:3px;}
+.stat-box .s-val{font-size:22px;font-weight:600;}
+.item{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:#f9f9f7;border-radius:9px;border:1px solid #eee;margin-bottom:7px;flex-wrap:wrap;gap:7px;}
+.item-name{font-size:14px;font-weight:600;}
+.item-meta{font-size:12px;color:#777;margin-top:2px;}
+.badge{font-size:11px;padding:2px 9px;border-radius:99px;white-space:nowrap;font-weight:500;}
+.badge-done{background:#eaf3de;color:#3b6d11;}
+.badge-pending{background:#faeeda;color:#854f0b;}
+.badge-blue{background:#e6f1fb;color:#185fa5;}
+.tab-bar{display:flex;gap:0;margin-bottom:1rem;border-bottom:1px solid #eee;overflow-x:auto;}
+.tab{padding:9px 14px;font-size:13px;cursor:pointer;border:none;background:none;color:#777;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;}
+.tab.active{color:#185FA5;border-bottom-color:#185FA5;font-weight:600;}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:100;padding:1rem;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:1.25rem;width:100%;max-width:420px;border:1px solid #ddd;max-height:90vh;overflow-y:auto;}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:1rem;}
+.modal-btns{display:flex;gap:8px;margin-top:1rem;}
+.modal-btns button{flex:1;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:9px 20px;border-radius:8px;font-size:13px;display:none;z-index:200;white-space:nowrap;}
+.toast.show{display:block;}
+.toast-success{background:#27500A;color:#fff;}
+.toast-error{background:#a32d2d;color:#fff;}
+.error-msg{color:#a32d2d;font-size:13px;margin-top:7px;display:none;}
+.actions-row{display:flex;gap:6px;align-items:center;}
+.section-title{font-size:13px;font-weight:600;color:#777;margin-bottom:8px;}
+.divider{border:none;border-top:1px solid #eee;margin:1rem 0;}
+.check-group{display:flex;flex-direction:column;gap:8px;margin-top:7px;}
+.check-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;cursor:pointer;transition:all 0.15s;}
+.check-item:hover{background:#f5f5f5;}
+.check-item.checked{background:#eaf3de;border-color:#3B6D11;}
+.check-item input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:#3B6D11;}
+.info-box{background:#e6f1fb;border-radius:8px;padding:10px 13px;font-size:13px;color:#185fa5;margin-bottom:1rem;}
+.loading{text-align:center;padding:2rem;color:#777;font-size:14px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#f7f7f5;padding:8px 6px;text-align:center;font-weight:600;border:1px solid #eee;font-size:12px;}
+th:first-child{text-align:right;}
+td{padding:7px 6px;border:1px solid #eee;vertical-align:middle;text-align:center;}
+td:first-child{text-align:right;font-weight:500;font-size:13px;white-space:nowrap;}
+td.report-input{text-align:right;}
+td.report-input input{border:none;background:transparent;padding:0;font-size:13px;width:100%;}
+td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;padding:2px 4px;}
+/* time table */
+.time-cell{cursor:pointer;transition:background 0.15s;user-select:none;}
+.time-cell:hover{opacity:0.75;}
+.time-cell.suitable{background:#eaf3de;color:#3b6d11;font-weight:600;}
+.time-cell.unsuitable{background:#fcebeb;color:#a32d2d;font-weight:600;}
+.time-cell.neutral{background:#fff;color:#aaa;}
+/* leader picker */
+.leader-block{border:1px solid #eee;border-radius:8px;padding:10px 12px;margin-bottom:8px;background:#f9f9f7;}
+.leader-block-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.leader-block-top select{flex:1;}
+.trait-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.trait-chip{padding:5px 12px;border-radius:99px;border:1.5px solid #ddd;background:#fff;font-size:12px;cursor:pointer;transition:all 0.15s;font-family:inherit;}
+.trait-chip.sel{background:#185FA5;color:#fff;border-color:#185FA5;}
+.time-picker-wrap{display:flex;flex-direction:column;gap:10px;margin-top:7px;}
+.time-slot-block{background:#f9f9f7;border:1px solid #eee;border-radius:10px;padding:10px 12px;}
+.day-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.day-chip{padding:5px 11px;border-radius:99px;border:1.5px solid #ddd;background:#fff;font-size:13px;cursor:pointer;font-family:inherit;transition:all 0.15s;}
+.day-chip.sel-s{background:#3B6D11;color:#fff;border-color:#3B6D11;}
+.day-chip.sel-u{background:#a32d2d;color:#fff;border-color:#a32d2d;}
+.time-row{display:flex;align-items:center;gap:8px;font-size:13px;flex-wrap:wrap;}
+.time-row select{flex:1;min-width:80px;padding:7px 8px;}
+.time-row span{color:#777;white-space:nowrap;}
+.slot-del{background:none;border:none;cursor:pointer;font-size:16px;color:#ccc;padding:0 4px;}
+.slot-del:hover{color:#a32d2d;}
+</style>
+</head>
+<body>
 
+<!-- LOGIN -->
+<div id="loginPage" class="page active">
+  <div class="logo-area">
+    <div class="logo-circle">⛪</div>
+    <h1>كنيسة الملاك والروماني</h1>
+    <p style="font-size:13px;color:#777;margin-top:5px;">أمانة الخدمة العامة</p>
+  </div>
+  <div class="card">
+    <label>اسم المستخدم</label>
+    <input type="text" id="loginUser" placeholder="أدخل اسم المستخدم"/>
+    <label>كلمة المرور</label>
+    <input type="password" id="loginPass" placeholder="••••••"/>
+    <p class="error-msg" id="loginError">⚠️ بيانات غلط، حاول تاني</p>
+    <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">دخول</button>
+  </div>
+</div>
+
+<!-- SUPER ADMIN -->
+<div id="superPage" class="page">
+  <div class="header">
+    <div>
+      <h2>المشرف العام</h2>
+      <p style="font-size:12px;color:#777;margin-top:2px;" id="superDate"></p>
+    </div>
+    <button class="icon-btn" onclick="doLogout()">🚪 خروج</button>
+  </div>
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchSuperTab('sTabStages')">المراحل</button>
+    <button class="tab" onclick="switchSuperTab('sTabReports')">تقارير الأمناء</button>
+    <button class="tab" onclick="switchSuperTab('sTabSurveys')">استطلاعات الخدام</button>
+    <button class="tab" onclick="switchSuperTab('sTabExport')">تصدير</button>
+  </div>
+  <div id="sTabStages">
+    <div class="card">
+      <p class="section-title">إضافة مرحلة جديدة</p>
+      <label>اسم الخدمة / المرحلة</label>
+      <input type="text" id="newStageName" placeholder="مثال: أعدادي، سنوي، خريجين..."/>
+      <label>اسم الأمين</label>
+      <input type="text" id="newAdminName" placeholder="مثال: مينا سمير"/>
+      <label>اسم المستخدم للأمين</label>
+      <input type="text" id="newAdminUser" placeholder="مثال: 01012345678"/>
+      <label>كلمة مرور الأمين</label>
+      <input type="text" id="newAdminPass" placeholder="مثال: 1234"/>
+      <button class="btn btn-primary" onclick="addStage()">+ إضافة المرحلة</button>
+    </div>
+    <div id="superStagesList"><div class="loading">جاري التحميل...</div></div>
+  </div>
+  <div id="sTabReports" style="display:none;"><div id="superReportsList"></div></div>
+  <div id="sTabSurveys" style="display:none;"><div id="superSurveysList"></div></div>
+  <div id="sTabExport" style="display:none;">
+    <div class="card">
+      <p style="font-size:14px;color:#555;margin-bottom:1rem;">تصدير كل البيانات دفعة واحدة</p>
+      <button class="btn btn-success" onclick="exportMegaAll()" style="margin-bottom:8px;">⬇️ تصدير كل شيء (ملف واحد)</button>
+      <hr class="divider"/>
+      <button class="btn btn-primary" onclick="exportAllReports()" style="margin-bottom:8px;">📋 تقارير الأمناء فقط</button>
+      <button class="btn btn-primary" onclick="exportAllSurveys()">📊 استطلاعات الخدام فقط</button>
+    </div>
+    <div id="superExportByStage"></div>
+  </div>
+</div>
+
+<!-- ADMIN — أمين الخدمة (يشوف تقريره وجدول خدامه فقط) -->
+<div id="adminPage" class="page">
+  <div class="header">
+    <div>
+      <h2 id="adminTitle">لوحة الأمين</h2>
+      <p style="font-size:12px;color:#777;margin-top:2px;" id="adminSubtitle"></p>
+    </div>
+    <button class="icon-btn" onclick="doLogout()">🚪</button>
+  </div>
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchAdminTab('aTabReport')">تقريري</button>
+    <button class="tab" onclick="switchAdminTab('aTabServants')">الخدام</button>
+  </div>
+  <div id="aTabReport">
+    <div class="card">
+      <p class="section-title">تقرير أمين الخدمة</p>
+      <label>اسم الخدمة</label>
+      <input type="text" id="rServiceName" placeholder="اسم الخدمة"/>
+      <label>إيجابيات الخدمة</label>
+      <textarea id="rPositives" placeholder="اكتب إيجابيات الخدمة..."></textarea>
+      <label>سلبيات الخدمة (يجب أن تُعالج العام القادم)</label>
+      <textarea id="rNegatives" placeholder="اكتب سلبيات الخدمة..."></textarea>
+      <label>من تتوافر فيه إمكانيات القائد الناجح</label>
+      <p style="font-size:12px;color:#777;margin-bottom:8px;">اختر اسم الخادم ثم حدد ما يتميز به من الصفات</p>
+      <div id="adminLeaderPickerSection"></div>
+      <button class="add-leader-btn" onclick="addAdminLeaderRow()">+ إضافة شخص آخر</button>
+      <hr class="divider"/>
+      <p class="section-title">جدول تقرير الخدام</p>
+      <div style="overflow-x:auto;">
+        <table><thead><tr>
+          <th style="text-align:right;">اسم الخادم</th>
+          <th>نسبة الحضور</th>
+          <th>مرات الافتقاد</th>
+          <th>مرات تحضير الدرس</th>
+          <th>ترشيح للعام القادم</th>
+          <th>ملاحظات</th>
+        </tr></thead><tbody id="servantTableBody"></tbody></table>
+      </div>
+      <button class="btn btn-primary" id="saveReportBtn" onclick="saveAdminReport()" style="margin-top:1rem;">💾 حفظ التقرير</button>
+    </div>
+  </div>
+  <div id="aTabServants" style="display:none;">
+    <div class="stat-grid" id="adminStats"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <p class="section-title" style="margin:0;">الخدام</p>
+      <button class="icon-btn" onclick="showAddServantModal()">+ إضافة خادم</button>
+    </div>
+    <div id="adminServantList"></div>
+    <button class="btn btn-success" onclick="exportStageServants()" style="margin-top:0.5rem;">📊 تصدير Excel</button>
+  </div>
+</div>
+
+<!-- SERVANT — الخادم (يملا استطلاعه بسرية) -->
+<div id="servantPage" class="page">
+  <div class="header">
+    <div>
+      <h2 id="servantPageName">استطلاع رأي الخادم</h2>
+      <p style="font-size:12px;color:#777;margin-top:2px;" id="servantPageStage"></p>
+    </div>
+    <button class="icon-btn" onclick="doLogout()">🚪</button>
+  </div>
+  <div class="card">
+    <div class="info-box">📋 إجاباتك سرية ولن يطلع عليها إلا الأمانة العامة للخدمة فقط</div>
+
+    <label>إيجابيات الخدمة</label>
+    <textarea id="sPositives" placeholder="ما الذي أعجبك في الخدمة هذا العام؟"></textarea>
+
+    <label>سلبيات الخدمة</label>
+    <textarea id="sNegatives" placeholder="ما الذي يحتاج إلى تحسين؟"></textarea>
+
+    <label style="margin-top:1.25rem;">من تتوافر فيه سمات القائد الناجح؟</label>
+    <p style="font-size:12px;color:#777;margin-bottom:8px;">اختر اسم الخادم ثم حدد ما يتميز به من الصفات</p>
+    <div id="leaderPickerSection"></div>
+    <button class="add-leader-btn" onclick="addLeaderRow()">+ إضافة شخص آخر</button>
+
+    <hr class="divider"/>
+
+    <label>المواعيد التي تناسبك</label>
+    <div id="suitableTimePicker" class="time-picker-wrap"></div>
+    <button class="add-leader-btn" onclick="addTimeSlot('suitable')">+ إضافة موعد</button>
+
+    <label style="margin-top:1.25rem;">المواعيد التي لا تناسبك</label>
+    <div id="unsuitableTimePicker" class="time-picker-wrap"></div>
+    <button class="add-leader-btn" onclick="addTimeSlot('unsuitable')">+ إضافة موعد</button>
+
+
+    <button class="btn btn-primary" id="submitSurveyBtn" onclick="saveServantSurvey()" style="margin-top:1.25rem;">💾 إرسال الاستطلاع</button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="addServantModal">
+  <div class="modal">
+    <h3>إضافة خادم جديد</h3>
+    <label>الاسم الكامل</label>
+    <input type="text" id="newServantName" placeholder="مثال: بولا مجدي"/>
+    <label>اسم المستخدم (للدخول)</label>
+    <input type="text" id="newServantUser" placeholder="مثال: رقم الموبايل"/>
+    <label>كلمة المرور</label>
+    <input type="text" id="newServantPass" placeholder="مثال: 1234"/>
+    <label>الدور / المهمة</label>
+    <input type="text" id="newServantRole" placeholder="مثال: خادم فريق الترانيم"/>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="saveNewServant()">إضافة</button>
+      <button class="btn" onclick="closeModals()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="editServantModal">
+  <div class="modal">
+    <h3>تعديل بيانات الخادم</h3>
+    <input type="hidden" id="editServantId"/>
+    <label>الاسم الكامل</label>
+    <input type="text" id="editServantName"/>
+    <label>اسم المستخدم</label>
+    <input type="text" id="editServantUser"/>
+    <label>كلمة المرور</label>
+    <input type="text" id="editServantPass"/>
+    <label>الدور / المهمة</label>
+    <input type="text" id="editServantRole"/>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="saveEditServant()">حفظ التعديلات</button>
+      <button class="btn" onclick="closeModals()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="deleteModal">
+  <div class="modal">
+    <h3>تأكيد الحذف</h3>
+    <p style="font-size:13px;color:#777;">هتحذف الخادم ده وكل بياناته. مش هترجع!</p>
+    <div class="modal-btns">
+      <button class="btn btn-del" onclick="confirmDelete()">حذف</button>
+      <button class="btn" onclick="closeModals()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="surveyViewModal">
+  <div class="modal">
+    <h3 id="svModalName">استطلاع</h3>
+    <div id="svModalContent"></div>
+    <div class="modal-btns"><button class="btn" onclick="closeModals()">إغلاق</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL='https://tporikleqmekhdriuepn.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwb3Jpa2xlcW1la2hkcml1ZXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NTAyMTMsImV4cCI6MjA5NzAyNjIxM30.u81rZB2d8B0KtbqZ72zGHmsP2Y-63vdSESc4NG05Itw';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const SUPER={user:'admin',pass:'1234'};
+const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const SLOTS=['8ص-12م','12م-4م','4م-8م','8م-12ل'];
+const TRAITS=['قدوة','تعليم','حكمة','تدبير','تواضع','رعاية'];
+
+let currentUser=null,currentStageId=null,currentStageServants=[],currentAdminReport=null,deleteTarget=null,allStages=[];
+let timesData={};
+let suitableSlots=[];   // [{days:[], from:'', to:''}]
+let unsuitableSlots=[]; // [{days:[], from:'', to:''}]
+
+const HOURS=Array.from({length:24},(_,i)=>{
+  const h=i%12||12; const ampm=i<12?'ص':'م';
+  return{val:i,label:`${h} ${ampm}`};
+});
+let adminLeaderData=[];// admin report leader picker
+
+// ===== UTILS =====
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
+function toast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show toast-'+(type==='error'?'error':'success');setTimeout(()=>t.classList.remove('show'),2500);}
+function closeModals(){document.querySelectorAll('.modal-bg').forEach(m=>m.classList.remove('open'));}
+function toggleCheck(el){const cb=el.querySelector('input[type=checkbox]');cb.checked=!cb.checked;el.classList.toggle('checked',cb.checked);}
+function setBtn(id,txt,dis=false){const b=document.getElementById(id);if(b){b.textContent=txt;b.disabled=dis;}}
+
+// ===== LOGIN =====
+async function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginError');
+  err.style.display='none';setBtn('loginBtn','جاري الدخول...',true);
+  if(u===SUPER.user&&p===SUPER.pass){
+    currentUser={role:'super'};
+    document.getElementById('superDate').textContent=new Date().toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    await loadSuperPage();setBtn('loginBtn','دخول',false);return;
+  }
+  const {data:stg}=await sb.from('stages').select('*').eq('username',u).eq('password',p).single();
+  if(stg){currentUser={role:'admin',stageId:stg.id};currentStageId=stg.id;await loadAdminPage(stg);setBtn('loginBtn','دخول',false);return;}
+  const {data:sv}=await sb.from('servants').select('*').eq('username',u).eq('password',p).single();
+  if(sv){currentUser={role:'servant',servantId:sv.id,stageId:sv.stage_id};await loadServantPage(sv);setBtn('loginBtn','دخول',false);return;}
+  err.style.display='block';setBtn('loginBtn','دخول',false);
+}
+function doLogout(){currentUser=null;currentStageId=null;currentStageServants=[];currentAdminReport=null;document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';showPage('loginPage');}
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+// ===== SUPER =====
+async function loadSuperPage(){const {data}=await sb.from('stages').select('*').order('created_at');allStages=data||[];renderSuperStages();showPage('superPage');}
+function switchSuperTab(id){
+  ['sTabStages','sTabReports','sTabSurveys','sTabExport'].forEach(t=>document.getElementById(t).style.display=t===id?'block':'none');
+  document.querySelectorAll('#superPage .tab').forEach((t,i)=>t.classList.toggle('active',['sTabStages','sTabReports','sTabSurveys','sTabExport'][i]===id));
+  if(id==='sTabReports')renderSuperReports();
+  if(id==='sTabSurveys')renderSuperSurveys();
+  if(id==='sTabExport')renderSuperExport();
+}
+async function addStage(){
+  const name=document.getElementById('newStageName').value.trim();
+  const aName=document.getElementById('newAdminName').value.trim();
+  const aUser=document.getElementById('newAdminUser').value.trim();
+  const aPass=document.getElementById('newAdminPass').value.trim();
+  if(!name||!aUser||!aPass){toast('الرجاء ملء كل الحقول','error');return;}
+  const {error}=await sb.from('stages').insert({id:'stage_'+Date.now(),name,admin_name:aName||aUser,username:aUser,password:aPass});
+  if(error){toast('خطأ: اسم المستخدم موجود بالفعل','error');return;}
+  ['newStageName','newAdminName','newAdminUser','newAdminPass'].forEach(i=>document.getElementById(i).value='');
+  toast('تم إضافة المرحلة ✓');await loadSuperPage();
+}
+function renderSuperStages(){
+  const el=document.getElementById('superStagesList');
+  if(!allStages.length){el.innerHTML='<p style="font-size:13px;color:#aaa;">لا يوجد مراحل بعد.</p>';return;}
+  el.innerHTML=allStages.map(s=>`<div class="item">
+    <div style="flex:1;"><div class="item-name">${s.name}</div><div class="item-meta">أمين: ${s.admin_name} | 👤 ${s.username}</div></div>
+    <div class="actions-row"><span class="badge badge-blue">${s.username}</span><button class="btn-del icon-btn" onclick="deleteStage('${s.id}')">🗑</button></div>
+  </div>`).join('');
+}
+async function deleteStage(id){if(!confirm('هتحذف المرحلة دي وكل بياناتها؟'))return;await sb.from('stages').delete().eq('id',id);toast('تم الحذف');await loadSuperPage();}
+
+async function renderSuperReports(){
+  const el=document.getElementById('superReportsList');el.innerHTML='<div class="loading">جاري التحميل...</div>';
+  const {data:reps}=await sb.from('admin_reports').select('*');
+  el.innerHTML=allStages.map(s=>{
+    const r=(reps||[]).find(r=>r.stage_id===s.id);
+    if(!r)return`<div class="card"><p style="font-weight:600;">${s.name}</p><p style="font-size:13px;color:#aaa;margin-top:5px;">لم يُرفع تقرير بعد</p></div>`;
+    return`<div class="card">
+      <p style="font-weight:600;margin-bottom:8px;">${s.name} <span class="badge badge-done">مكتمل</span></p>
+      <p style="font-size:13px;"><strong>اسم الخدمة:</strong> ${r.service_name||''}</p>
+      <p style="font-size:13px;margin-top:6px;"><strong>إيجابيات:</strong><br/>${r.positives||'—'}</p>
+      <p style="font-size:13px;margin-top:6px;"><strong>سلبيات:</strong><br/>${r.negatives||'—'}</p>
+      <p style="font-size:13px;margin-top:6px;"><strong>إمكانيات القائد:</strong> ${r.leader_traits||'—'}</p>
+      <p style="font-size:11px;color:#aaa;margin-top:8px;">حُفظ: ${r.saved_at||''}</p>
+    </div>`;
+  }).join('');
+}
+
+async function renderSuperSurveys(){
+  const el=document.getElementById('superSurveysList');el.innerHTML='<div class="loading">جاري التحميل...</div>';
+  const {data:svs}=await sb.from('servants').select('*');
+  const {data:survs}=await sb.from('surveys').select('*');
+  let html='';
+  allStages.forEach(s=>{
+    const stageSvs=(svs||[]).filter(sv=>sv.stage_id===s.id);
+    html+=`<div class="card"><p style="font-weight:600;margin-bottom:8px;">${s.name}</p>`;
+    if(!stageSvs.length){html+='<p style="font-size:12px;color:#aaa;">لا يوجد خدام</p>';}
+    stageSvs.forEach(sv=>{
+      const sur=(survs||[]).find(sr=>sr.servant_id===sv.id);
+      html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f0f0;">
+        <span style="font-size:13px;">${sv.name} <span style="color:#aaa;font-size:11px;">${sv.role}</span></span>
+        <div class="actions-row">
+          <span class="badge ${sur?'badge-done':'badge-pending'}">${sur?'مكتمل':'معلق'}</span>
+          ${sur?`<button class="icon-btn" onclick='viewSurvey(${JSON.stringify(sur)},${JSON.stringify(sv.name)})'>👁</button>`:''}
+        </div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+function renderSuperExport(){
+  document.getElementById('superExportByStage').innerHTML=allStages.map(s=>`
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:0.85rem 1.25rem;margin-bottom:0.5rem;">
+      <span style="font-size:14px;font-weight:600;">${s.name}</span>
+      <div class="actions-row">
+        <button class="icon-btn" onclick="exportStageReport('${s.id}','${s.name}')">📋 تقرير الأمين</button>
+        <button class="icon-btn" onclick="exportStageSurveys('${s.id}','${s.name}')">📊 استطلاعات</button>
+      </div>
+    </div>`).join('');
+}
+
+// ===== ADMIN =====
+async function loadAdminPage(stage){
+  currentStageId=stage.id;
+  document.getElementById('adminTitle').textContent='أمين — '+stage.name;
+  document.getElementById('adminSubtitle').textContent=stage.admin_name;
+  const {data}=await sb.from('servants').select('*').eq('stage_id',stage.id).order('created_at');
+  currentStageServants=data||[];
+  await loadAdminReportForm();
+  switchAdminTab('aTabReport');
+  showPage('adminPage');
+}
+function switchAdminTab(id){
+  ['aTabReport','aTabServants'].forEach(t=>document.getElementById(t).style.display=t===id?'block':'none');
+  document.querySelectorAll('#adminPage .tab').forEach((t,i)=>t.classList.toggle('active',['aTabReport','aTabServants'][i]===id));
+  if(id==='aTabServants')renderAdminServants();
+}
+async function loadAdminReportForm(){
+  const {data:r}=await sb.from('admin_reports').select('*').eq('stage_id',currentStageId).single();
+  currentAdminReport=r||null;
+  document.getElementById('rServiceName').value=r?.service_name||'';
+  document.getElementById('rPositives').value=r?.positives||'';
+  document.getElementById('rNegatives').value=r?.negatives||'';
+  adminLeaderData=r?.leader_data||[];
+  buildAdminLeaderPicker();
+  buildServantTable(r?.servant_rows||{});
+}
+function buildServantTable(rows={}){
+  document.getElementById('servantTableBody').innerHTML=currentStageServants.map(sv=>{
+    const row=rows[sv.id]||{};
+    return`<tr>
+      <td class="report-input" style="text-align:right;font-weight:600;">${sv.name}</td>
+      <td class="report-input"><input type="text" value="${row.attendance||''}" placeholder="%" onchange="updateRow('${sv.id}','attendance',this.value)"/></td>
+      <td class="report-input"><input type="text" value="${row.visits||''}" placeholder="0" onchange="updateRow('${sv.id}','visits',this.value)"/></td>
+      <td class="report-input"><input type="text" value="${row.lessons||''}" placeholder="0" onchange="updateRow('${sv.id}','lessons',this.value)"/></td>
+      <td class="report-input"><input type="text" value="${row.recommend||''}" placeholder="آه/لأ" onchange="updateRow('${sv.id}','recommend',this.value)"/></td>
+      <td class="report-input"><input type="text" value="${row.notes||''}" placeholder="..." onchange="updateRow('${sv.id}','notes',this.value)"/></td>
+    </tr>`;
+  }).join('');
+}
+let pendingRows={};
+function updateRow(svId,field,val){if(!pendingRows[svId])pendingRows[svId]={};pendingRows[svId][field]=val;}
+async function saveAdminReport(){
+  setBtn('saveReportBtn','جاري الحفظ...',true);
+  const mergedRows={...(currentAdminReport?.servant_rows||{}),...pendingRows};
+  const payload={stage_id:currentStageId,service_name:document.getElementById('rServiceName').value,positives:document.getElementById('rPositives').value,negatives:document.getElementById('rNegatives').value,leader_data:adminLeaderData,servant_rows:mergedRows,saved_at:new Date().toLocaleString('ar-EG')};
+  if(currentAdminReport){await sb.from('admin_reports').update(payload).eq('stage_id',currentStageId);}
+  else{payload.id='rep_'+Date.now();await sb.from('admin_reports').insert(payload);}
+  pendingRows={};await loadAdminReportForm();toast('تم حفظ التقرير ✓');setBtn('saveReportBtn','💾 حفظ التقرير',false);
+}
+async function renderAdminServants(){
+  const {data}=await sb.from('servants').select('*').eq('stage_id',currentStageId).order('created_at');
+  currentStageServants=data||[];
+  const {data:survs}=await sb.from('surveys').select('servant_id');
+  const surveyedIds=new Set((survs||[]).map(s=>s.servant_id));
+  const done=currentStageServants.filter(sv=>surveyedIds.has(sv.id)).length;
+  document.getElementById('adminStats').innerHTML=`
+    <div class="stat-box"><p class="s-label">إجمالي الخدام</p><p class="s-val">${currentStageServants.length}</p></div>
+    <div class="stat-box"><p class="s-label">ملأوا الاستطلاع</p><p class="s-val" style="color:#3b6d11;">${done}</p></div>
+    <div class="stat-box"><p class="s-label">لم يملأوا</p><p class="s-val" style="color:#854f0b;">${currentStageServants.length-done}</p></div>`;
+  const el=document.getElementById('adminServantList');
+  if(!currentStageServants.length){el.innerHTML='<p style="font-size:13px;color:#aaa;">لا يوجد خدام. اضغط "إضافة خادم".</p>';return;}
+  el.innerHTML=currentStageServants.map((sv,i)=>`<div class="item">
+    <div><div class="item-name">${sv.name}</div><div class="item-meta">${sv.role} | 👤 ${sv.username}</div></div>
+    <div class="actions-row">
+      <span class="badge ${surveyedIds.has(sv.id)?'badge-done':'badge-pending'}">${surveyedIds.has(sv.id)?'ملأ الاستطلاع':'لم يملأ'}</span>
+      <button class="icon-btn" onclick='showEditServant(${JSON.stringify(sv)})'>✏️</button>
+      <button class="btn-del icon-btn" onclick="askDelete('${sv.id}')">🗑</button>
+    </div>
+  </div>`).join('');
+  buildServantTable(currentAdminReport?.servant_rows||{});
+}
+function showAddServantModal(){document.getElementById('addServantModal').classList.add('open');}
+function showEditServant(sv){
+  document.getElementById('editServantId').value=sv.id;
+  document.getElementById('editServantName').value=sv.name;
+  document.getElementById('editServantUser').value=sv.username;
+  document.getElementById('editServantPass').value=sv.password;
+  document.getElementById('editServantRole').value=sv.role;
+  document.getElementById('editServantModal').classList.add('open');
+}
+async function saveEditServant(){
+  const id=document.getElementById('editServantId').value;
+  const name=document.getElementById('editServantName').value.trim();
+  const user=document.getElementById('editServantUser').value.trim();
+  const pass=document.getElementById('editServantPass').value.trim();
+  const role=document.getElementById('editServantRole').value.trim();
+  if(!name||!user||!pass){toast('الرجاء ملء كل الحقول','error');return;}
+  const {error}=await sb.from('servants').update({name,username:user,password:pass,role:role||'خادم'}).eq('id',id);
+  if(error){toast('خطأ في الحفظ','error');return;}
+  closeModals();toast('تم التعديل ✓');await renderAdminServants();
+}
+async function saveNewServant(){
+  const name=document.getElementById('newServantName').value.trim();
+  const user=document.getElementById('newServantUser').value.trim();
+  const pass=document.getElementById('newServantPass').value.trim();
+  const role=document.getElementById('newServantRole').value.trim();
+  if(!name||!user||!pass){toast('الرجاء ملء الاسم واسم المستخدم وكلمة المرور','error');return;}
+  const {error}=await sb.from('servants').insert({id:'sv_'+Date.now(),stage_id:currentStageId,name,username:user,password:pass,role:role||'خادم'});
+  if(error){toast('خطأ: اسم المستخدم موجود بالفعل','error');return;}
+  closeModals();['newServantName','newServantUser','newServantPass','newServantRole'].forEach(i=>document.getElementById(i).value='');
+  toast('تم إضافة الخادم ✓');await renderAdminServants();
+}
+function askDelete(id){deleteTarget=id;document.getElementById('deleteModal').classList.add('open');}
+async function confirmDelete(){if(!deleteTarget)return;await sb.from('servants').delete().eq('id',deleteTarget);closeModals();deleteTarget=null;toast('تم الحذف');await renderAdminServants();}
+async function exportStageServants(){
+  const {data:r}=await sb.from('admin_reports').select('servant_rows').eq('stage_id',currentStageId).single();
+  const rows=r?.servant_rows||{};let csv='\uFEFF';
+  csv+='الاسم,الدور,نسبة الحضور,مرات الافتقاد,مرات تحضير الدرس,ترشيح,ملاحظات\n';
+  currentStageServants.forEach(sv=>{const row=rows[sv.id]||{};csv+=`"${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;});
+  dl(csv,'خدام_المرحلة.csv');
+}
+
+// ===== SERVANT =====
+async function loadServantPage(sv){
+  const {data:stage}=await sb.from('stages').select('name').eq('id',sv.stage_id).single();
+  // load all servants in same stage for leader picker
+  const {data:stageServants}=await sb.from('servants').select('id,name').eq('stage_id',sv.stage_id).order('name');
+  const othersInStage=(stageServants||[]).filter(s=>s.id!==sv.id);
+  document.getElementById('servantPageName').textContent='أهلاً، '+sv.name;
+  document.getElementById('servantPageStage').textContent='خدمة: '+(stage?.name||'');
+  const {data:existing}=await sb.from('surveys').select('*').eq('servant_id',sv.id).single();
+  document.getElementById('sPositives').value=existing?.positives||'';
+  document.getElementById('sNegatives').value=existing?.negatives||'';
+  suitableSlots=existing?.suitable_slots||[];
+  unsuitableSlots=existing?.unsuitable_slots||[];
+  renderTimePicker('suitable');
+  renderTimePicker('unsuitable');
+  // leader picker
+  leaderData=existing?.leader_data||[];
+  buildLeaderPicker(othersInStage);
+  const btn=document.getElementById('submitSurveyBtn');
+  if(existing?.saved_at){btn.textContent='✅ تم الإرسال — يمكنك التعديل وإعادة الإرسال';btn.style.background='#3B6D11';btn.style.borderColor='#3B6D11';}
+  else{btn.textContent='💾 إرسال الاستطلاع';btn.style.background='#185FA5';btn.style.borderColor='#185FA5';}
+  // store for picker
+  window._stageServants=othersInStage;
+  showPage('servantPage');
+}
+
+function buildTimesTable(){
+  const tbody=document.getElementById('timesTableBody');
+  tbody.innerHTML=DAYS.map(day=>`<tr>
+    <td>${day}</td>
+    ${SLOTS.map(slot=>{
+      const key=day+'_'+slot;
+      const state=timesData[key]||'neutral';
+      return`<td class="time-cell ${state}" onclick="cycleTime('${key}',this)">${state==='suitable'?'✓':state==='unsuitable'?'✗':''}</td>`;
+    }).join('')}
+  </tr>`).join('');
+}
+
+function cycleTime(key,cell){
+  const states=['neutral','suitable','unsuitable'];
+  const cur=timesData[key]||'neutral';
+  const next=states[(states.indexOf(cur)+1)%3];
+  timesData[key]=next;
+  cell.className='time-cell '+next;
+  cell.textContent=next==='suitable'?'✓':next==='unsuitable'?'✗':'';
+}
+
+function buildAdminLeaderPicker(){
+  const sec=document.getElementById('adminLeaderPickerSection');
+  if(!adminLeaderData.length)adminLeaderData=[{name:'',traits:[]}];
+  sec.innerHTML=adminLeaderData.map((item,i)=>`
+    <div class="leader-block" id="alblock_${i}">
+      <div class="leader-block-top">
+        <select onchange="adminLeaderData[${i}].name=this.value">
+          <option value="">— اختر اسم الخادم —</option>
+          ${currentStageServants.map(s=>`<option value="${s.name}" ${item.name===s.name?'selected':''}>${s.name}</option>`).join('')}
+        </select>
+        ${adminLeaderData.length>1?`<button class="icon-btn btn-del" onclick="removeAdminLeaderRow(${i})" style="margin-top:0;">✕</button>`:''}
+      </div>
+      <p style="font-size:12px;color:#777;margin-bottom:6px;">ما يتميز به:</p>
+      <div class="trait-chips">
+        ${TRAITS.map(t=>`<button class="trait-chip ${item.traits.includes(t)?'sel':''}" onclick="toggleAdminTrait(${i},'${t}',this)">${t}</button>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function toggleAdminTrait(idx,trait,btn){
+  if(adminLeaderData[idx].traits.includes(trait)){adminLeaderData[idx].traits=adminLeaderData[idx].traits.filter(t=>t!==trait);btn.classList.remove('sel');}
+  else{adminLeaderData[idx].traits.push(trait);btn.classList.add('sel');}
+}
+function addAdminLeaderRow(){adminLeaderData.push({name:'',traits:[]});buildAdminLeaderPicker();}
+function removeAdminLeaderRow(i){adminLeaderData.splice(i,1);if(!adminLeaderData.length)adminLeaderData=[{name:'',traits:[]}];buildAdminLeaderPicker();}
+
+function renderTimePicker(type){
+  const slots=type==='suitable'?suitableSlots:unsuitableSlots;
+  const containerId=type==='suitable'?'suitableTimePicker':'unsuitableTimePicker';
+  const selClass=type==='suitable'?'sel-s':'sel-u';
+  const el=document.getElementById(containerId);
+  if(!slots.length){el.innerHTML='<p style="font-size:12px;color:#aaa;padding:4px 0;">لم يُضف موعد بعد</p>';return;}
+  el.innerHTML=slots.map((slot,i)=>`
+    <div class="time-slot-block">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:12px;color:#777;font-weight:600;">الأيام</span>
+        <button class="slot-del" onclick="removeTimeSlot('${type}',${i})">✕</button>
+      </div>
+      <div class="day-chips">
+        ${DAYS.map(d=>`<button class="day-chip ${slot.days.includes(d)?selClass:''}" onclick="toggleDay('${type}',${i},'${d}',this)">${d}</button>`).join('')}
+      </div>
+      <div class="time-row">
+        <span>من</span>
+        <select onchange="slots[${i}].from=this.value" data-type="${type}" data-idx="${i}" data-field="from">
+          ${HOURS.map(h=>`<option value="${h.val}" ${slot.from==h.val?'selected':''}>${h.label}</option>`).join('')}
+        </select>
+        <span>إلى</span>
+        <select onchange="slots[${i}].to=this.value" data-type="${type}" data-idx="${i}" data-field="to">
+          ${HOURS.map(h=>`<option value="${h.val}" ${slot.to==h.val?'selected':''}>${h.label}</option>`).join('')}
+        </select>
+      </div>
+    </div>`).join('');
+  // fix onchange to use correct array
+  el.querySelectorAll('select').forEach(sel=>{
+    sel.onchange=function(){
+      const arr=this.dataset.type==='suitable'?suitableSlots:unsuitableSlots;
+      arr[this.dataset.idx][this.dataset.field]=parseInt(this.value);
+    };
+  });
+}
+function addTimeSlot(type){
+  if(type==='suitable')suitableSlots.push({days:[],from:8,to:10});
+  else unsuitableSlots.push({days:[],from:8,to:10});
+  renderTimePicker(type);
+}
+function removeTimeSlot(type,i){
+  if(type==='suitable')suitableSlots.splice(i,1);
+  else unsuitableSlots.splice(i,1);
+  renderTimePicker(type);
+}
+function toggleDay(type,idx,day,btn){
+  const arr=type==='suitable'?suitableSlots:unsuitableSlots;
+  const selClass=type==='suitable'?'sel-s':'sel-u';
+  const days=arr[idx].days;
+  if(days.includes(day)){arr[idx].days=days.filter(d=>d!==day);btn.classList.remove(selClass);}
+  else{arr[idx].days.push(day);btn.classList.add(selClass);}
+}
+function slotsToText(slots){
+  return slots.filter(s=>s.days.length).map(s=>{
+    const from=HOURS[s.from]?.label||s.from;
+    const to=HOURS[s.to]?.label||s.to;
+    return `${s.days.join('، ')} من ${from} إلى ${to}`;
+  }).join('\n');
+}
+
+function buildLeaderPicker(servants){
+  const sec=document.getElementById('leaderPickerSection');
+  if(!leaderData.length)leaderData=[{name:'',traits:[]}];
+  sec.innerHTML=leaderData.map((item,i)=>`
+    <div class="leader-block" id="lblock_${i}">
+      <div class="leader-block-top">
+        <select onchange="leaderData[${i}].name=this.value">
+          <option value="">— اختر اسم الخادم —</option>
+          ${servants.map(s=>`<option value="${s.name}" ${item.name===s.name?'selected':''}>${s.name}</option>`).join('')}
+        </select>
+        ${leaderData.length>1?`<button class="icon-btn btn-del" onclick="removeLeaderRow(${i})" style="margin-top:0;">✕</button>`:''}
+      </div>
+      <p style="font-size:12px;color:#777;margin-bottom:6px;">ما يتميز به:</p>
+      <div class="trait-chips">
+        ${TRAITS.map(t=>`<button class="trait-chip ${item.traits.includes(t)?'sel':''}" onclick="toggleTrait(${i},'${t}',this)">${t}</button>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function toggleTrait(idx,trait,btn){
+  if(leaderData[idx].traits.includes(trait)){leaderData[idx].traits=leaderData[idx].traits.filter(t=>t!==trait);btn.classList.remove('sel');}
+  else{leaderData[idx].traits.push(trait);btn.classList.add('sel');}
+}
+function addLeaderRow(){leaderData.push({name:'',traits:[]});buildLeaderPicker(window._stageServants||[]);}
+function removeLeaderRow(i){leaderData.splice(i,1);if(!leaderData.length)leaderData=[{name:'',traits:[]}];buildLeaderPicker(window._stageServants||[]);}
+
+async function saveServantSurvey(){
+  const svId=currentUser.servantId;
+  setBtn('submitSurveyBtn','جاري الإرسال...',true);
+  const payload={servant_id:svId,positives:document.getElementById('sPositives').value,negatives:document.getElementById('sNegatives').value,leader_data:leaderData,suitable_slots:suitableSlots,unsuitable_slots:unsuitableSlots,suitable_times:slotsToText(suitableSlots),unsuitable_times:slotsToText(unsuitableSlots),saved_at:new Date().toLocaleString('ar-EG')};
+  const {data:existing}=await sb.from('surveys').select('id').eq('servant_id',svId).single();
+  if(existing){await sb.from('surveys').update(payload).eq('servant_id',svId);}
+  else{payload.id='sur_'+Date.now();await sb.from('surveys').insert(payload);}
+  toast('تم إرسال الاستطلاع ✓ شكراً لك!');
+  const btn=document.getElementById('submitSurveyBtn');
+  btn.textContent='✅ تم الإرسال — يمكنك التعديل وإعادة الإرسال';
+  btn.style.background='#3B6D11';btn.style.borderColor='#3B6D11';btn.disabled=false;
+}
+
+// ===== VIEW SURVEY =====
+function viewSurvey(sur,name){
+  document.getElementById('svModalName').textContent='استطلاع — '+name;
+  const ld=(sur.leader_data||[]).filter(l=>l.name).map(l=>`<li>${l.name}: ${l.traits.join('، ')||'—'}</li>`).join('');
+  document.getElementById('svModalContent').innerHTML=`<div style="font-size:13px;line-height:1.8;">
+    <p><strong>إيجابيات:</strong><br/>${sur.positives||'—'}</p>
+    <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
+    <p><strong>سلبيات:</strong><br/>${sur.negatives||'—'}</p>
+    <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
+    <p><strong>القادة المقترحون:</strong></p>
+    ${ld?`<ul style="margin:4px 0 0 16px;">${ld}</ul>`:'<p>—</p>'}
+    <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
+    <p><strong>المواعيد المناسبة:</strong><br/>${sur.suitable_times||'—'}</p>
+    <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
+    <p><strong>المواعيد غير المناسبة:</strong><br/>${sur.unsuitable_times||'—'}</p>
+    <p style="color:#aaa;font-size:11px;margin-top:8px;">تاريخ الإرسال: ${sur.saved_at||''}</p>
+  </div>`;
+  document.getElementById('surveyViewModal').classList.add('open');
+}
+
+// ===== EXPORT =====
+function dl(csv,name){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download=name;a.click();toast('تم التصدير ✓');}
+
+async function exportAllReports(){
+  const {data:reps}=await sb.from('admin_reports').select('*');
+  let csv='\uFEFF';csv+='المرحلة,اسم الخدمة,إيجابيات,سلبيات,إمكانيات القائد,تاريخ الحفظ\n';
+  allStages.forEach(s=>{const r=(reps||[]).find(r=>r.stage_id===s.id)||{};csv+=`"${s.name}","${r.service_name||''}","${(r.positives||'').replace(/"/g,'""')}","${(r.negatives||'').replace(/"/g,'""')}","${r.leader_traits||''}","${r.saved_at||''}"\n`;});
+  dl(csv,'تقارير_الأمناء.csv');
+}
+
+async function exportAllSurveys(){
+  const {data:svs}=await sb.from('servants').select('*');
+  const {data:survs}=await sb.from('surveys').select('*');
+  let csv='\uFEFF';csv+='المرحلة,اسم الخادم,الدور,إيجابيات,سلبيات,القادة المقترحون,تاريخ الإرسال\n';
+  allStages.forEach(s=>{
+    (svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{
+      const sr=(survs||[]).find(sr=>sr.servant_id===sv.id)||{};
+      const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');
+      csv+=`"${s.name}","${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.saved_at||''}"\n`;
+    });
+  });
+  dl(csv,'استطلاعات_الخدام.csv');
+}
+
+async function exportMegaAll(){
+  const {data:reps}=await sb.from('admin_reports').select('*');
+  const {data:svs}=await sb.from('servants').select('*');
+  const {data:survs}=await sb.from('surveys').select('*');
+  let csv='\uFEFF';
+  csv+='=== تقارير الأمناء ===\nالمرحلة,اسم الخدمة,إيجابيات,سلبيات,إمكانيات القائد,تاريخ الحفظ\n';
+  allStages.forEach(s=>{const r=(reps||[]).find(r=>r.stage_id===s.id)||{};csv+=`"${s.name}","${r.service_name||''}","${(r.positives||'').replace(/"/g,'""')}","${(r.negatives||'').replace(/"/g,'""')}","${r.leader_traits||''}","${r.saved_at||''}"\n`;});
+  csv+='\n=== جداول الخدام ===\nالمرحلة,اسم الخادم,الدور,نسبة الحضور,مرات الافتقاد,مرات تحضير الدرس,ترشيح,ملاحظات\n';
+  allStages.forEach(s=>{const r=(reps||[]).find(r=>r.stage_id===s.id)||{};const rows=r.servant_rows||{};(svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{const row=rows[sv.id]||{};csv+=`"${s.name}","${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;});});
+  csv+='\n=== استطلاعات الخدام ===\nالمرحلة,اسم الخادم,الدور,إيجابيات,سلبيات,القادة المقترحون,تاريخ الإرسال\n';
+  allStages.forEach(s=>{(svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{const sr=(survs||[]).find(sr=>sr.servant_id===sv.id)||{};const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');csv+=`"${s.name}","${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.saved_at||''}"\n`;});});
+  dl(csv,'كل_البيانات.csv');
+}
+
+async function exportStageReport(stageId,stageName){
+  const {data:r}=await sb.from('admin_reports').select('*').eq('stage_id',stageId).single();
+  const {data:svs}=await sb.from('servants').select('*').eq('stage_id',stageId);
+  const rows=r?.servant_rows||{};let csv='\uFEFF';
+  csv+=`تقرير أمين الخدمة — ${stageName}\nاسم الخدمة,"${r?.service_name||''}"\nإيجابيات,"${(r?.positives||'').replace(/"/g,'""')}"\nسلبيات,"${(r?.negatives||'').replace(/"/g,'""')}"\nإمكانيات القائد,"${r?.leader_traits||''}"\n\n`;
+  csv+='اسم الخادم,الدور,نسبة الحضور,مرات الافتقاد,مرات تحضير الدرس,ترشيح,ملاحظات\n';
+  (svs||[]).forEach(sv=>{const row=rows[sv.id]||{};csv+=`"${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;});
+  dl(csv,`تقرير_${stageName}.csv`);
+}
+
+async function exportStageSurveys(stageId,stageName){
+  const {data:svs}=await sb.from('servants').select('*').eq('stage_id',stageId);
+  const {data:survs}=await sb.from('surveys').select('*');
+  let csv='\uFEFF';csv+='اسم الخادم,الدور,إيجابيات,سلبيات,القادة المقترحون,تاريخ الإرسال\n';
+  (svs||[]).forEach(sv=>{const sr=(survs||[]).find(s=>s.servant_id===sv.id)||{};const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');csv+=`"${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.saved_at||''}"\n`;});
+  dl(csv,`استطلاعات_${stageName}.csv`);
+}
+</script>
+</body>
+</html>
