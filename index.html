@@ -88,8 +88,17 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
 .trait-chips{display:flex;gap:6px;flex-wrap:wrap;}
 .trait-chip{padding:5px 12px;border-radius:99px;border:1.5px solid #ddd;background:#fff;font-size:12px;cursor:pointer;transition:all 0.15s;font-family:inherit;}
 .trait-chip.sel{background:#185FA5;color:#fff;border-color:#185FA5;}
-.add-leader-btn{width:100%;padding:7px;font-size:13px;cursor:pointer;border-radius:8px;border:1.5px dashed #ccc;background:#fff;color:#777;font-family:inherit;margin-top:4px;}
-.add-leader-btn:hover{background:#f5f5f5;}
+.time-picker-wrap{display:flex;flex-direction:column;gap:10px;margin-top:7px;}
+.time-slot-block{background:#f9f9f7;border:1px solid #eee;border-radius:10px;padding:10px 12px;}
+.day-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.day-chip{padding:5px 11px;border-radius:99px;border:1.5px solid #ddd;background:#fff;font-size:13px;cursor:pointer;font-family:inherit;transition:all 0.15s;}
+.day-chip.sel-s{background:#3B6D11;color:#fff;border-color:#3B6D11;}
+.day-chip.sel-u{background:#a32d2d;color:#fff;border-color:#a32d2d;}
+.time-row{display:flex;align-items:center;gap:8px;font-size:13px;flex-wrap:wrap;}
+.time-row select{flex:1;min-width:80px;padding:7px 8px;}
+.time-row span{color:#777;white-space:nowrap;}
+.slot-del{background:none;border:none;cursor:pointer;font-size:16px;color:#ccc;padding:0 4px;}
+.slot-del:hover{color:#a32d2d;}
 </style>
 </head>
 <body>
@@ -233,10 +242,12 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
     <hr class="divider"/>
 
     <label>المواعيد التي تناسبك</label>
-    <textarea id="sSuitableTimes" placeholder="مثال: الجمعة من 5 عصراً لـ 8 مساءً، السبت صباحاً..."></textarea>
+    <div id="suitableTimePicker" class="time-picker-wrap"></div>
+    <button class="add-leader-btn" onclick="addTimeSlot('suitable')">+ إضافة موعد</button>
 
-    <label>المواعيد التي لا تناسبك</label>
-    <textarea id="sUnsuitableTimes" placeholder="مثال: الأحد صباحاً، الاثنين كل اليوم..."></textarea>
+    <label style="margin-top:1.25rem;">المواعيد التي لا تناسبك</label>
+    <div id="unsuitableTimePicker" class="time-picker-wrap"></div>
+    <button class="add-leader-btn" onclick="addTimeSlot('unsuitable')">+ إضافة موعد</button>
 
 
     <button class="btn btn-primary" id="submitSurveyBtn" onclick="saveServantSurvey()" style="margin-top:1.25rem;">💾 إرسال الاستطلاع</button>
@@ -312,8 +323,14 @@ const SLOTS=['8ص-12م','12م-4م','4م-8م','8م-12ل'];
 const TRAITS=['قدوة','تعليم','حكمة','تدبير','تواضع','رعاية'];
 
 let currentUser=null,currentStageId=null,currentStageServants=[],currentAdminReport=null,deleteTarget=null,allStages=[];
-let timesData={};// {day_slot: 'suitable'|'unsuitable'|'neutral'}
-let leaderData=[];// servant survey leader picker
+let timesData={};
+let suitableSlots=[];   // [{days:[], from:'', to:''}]
+let unsuitableSlots=[]; // [{days:[], from:'', to:''}]
+
+const HOURS=Array.from({length:24},(_,i)=>{
+  const h=i%12||12; const ampm=i<12?'ص':'م';
+  return{val:i,label:`${h} ${ampm}`};
+});
 let adminLeaderData=[];// admin report leader picker
 
 // ===== UTILS =====
@@ -548,8 +565,10 @@ async function loadServantPage(sv){
   const {data:existing}=await sb.from('surveys').select('*').eq('servant_id',sv.id).single();
   document.getElementById('sPositives').value=existing?.positives||'';
   document.getElementById('sNegatives').value=existing?.negatives||'';
-  document.getElementById('sSuitableTimes').value=existing?.suitable_times||'';
-  document.getElementById('sUnsuitableTimes').value=existing?.unsuitable_times||'';
+  suitableSlots=existing?.suitable_slots||[];
+  unsuitableSlots=existing?.unsuitable_slots||[];
+  renderTimePicker('suitable');
+  renderTimePicker('unsuitable');
   // leader picker
   leaderData=existing?.leader_data||[];
   buildLeaderPicker(othersInStage);
@@ -607,6 +626,65 @@ function toggleAdminTrait(idx,trait,btn){
 function addAdminLeaderRow(){adminLeaderData.push({name:'',traits:[]});buildAdminLeaderPicker();}
 function removeAdminLeaderRow(i){adminLeaderData.splice(i,1);if(!adminLeaderData.length)adminLeaderData=[{name:'',traits:[]}];buildAdminLeaderPicker();}
 
+function renderTimePicker(type){
+  const slots=type==='suitable'?suitableSlots:unsuitableSlots;
+  const containerId=type==='suitable'?'suitableTimePicker':'unsuitableTimePicker';
+  const selClass=type==='suitable'?'sel-s':'sel-u';
+  const el=document.getElementById(containerId);
+  if(!slots.length){el.innerHTML='<p style="font-size:12px;color:#aaa;padding:4px 0;">لم يُضف موعد بعد</p>';return;}
+  el.innerHTML=slots.map((slot,i)=>`
+    <div class="time-slot-block">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:12px;color:#777;font-weight:600;">الأيام</span>
+        <button class="slot-del" onclick="removeTimeSlot('${type}',${i})">✕</button>
+      </div>
+      <div class="day-chips">
+        ${DAYS.map(d=>`<button class="day-chip ${slot.days.includes(d)?selClass:''}" onclick="toggleDay('${type}',${i},'${d}',this)">${d}</button>`).join('')}
+      </div>
+      <div class="time-row">
+        <span>من</span>
+        <select onchange="slots[${i}].from=this.value" data-type="${type}" data-idx="${i}" data-field="from">
+          ${HOURS.map(h=>`<option value="${h.val}" ${slot.from==h.val?'selected':''}>${h.label}</option>`).join('')}
+        </select>
+        <span>إلى</span>
+        <select onchange="slots[${i}].to=this.value" data-type="${type}" data-idx="${i}" data-field="to">
+          ${HOURS.map(h=>`<option value="${h.val}" ${slot.to==h.val?'selected':''}>${h.label}</option>`).join('')}
+        </select>
+      </div>
+    </div>`).join('');
+  // fix onchange to use correct array
+  el.querySelectorAll('select').forEach(sel=>{
+    sel.onchange=function(){
+      const arr=this.dataset.type==='suitable'?suitableSlots:unsuitableSlots;
+      arr[this.dataset.idx][this.dataset.field]=parseInt(this.value);
+    };
+  });
+}
+function addTimeSlot(type){
+  if(type==='suitable')suitableSlots.push({days:[],from:8,to:10});
+  else unsuitableSlots.push({days:[],from:8,to:10});
+  renderTimePicker(type);
+}
+function removeTimeSlot(type,i){
+  if(type==='suitable')suitableSlots.splice(i,1);
+  else unsuitableSlots.splice(i,1);
+  renderTimePicker(type);
+}
+function toggleDay(type,idx,day,btn){
+  const arr=type==='suitable'?suitableSlots:unsuitableSlots;
+  const selClass=type==='suitable'?'sel-s':'sel-u';
+  const days=arr[idx].days;
+  if(days.includes(day)){arr[idx].days=days.filter(d=>d!==day);btn.classList.remove(selClass);}
+  else{arr[idx].days.push(day);btn.classList.add(selClass);}
+}
+function slotsToText(slots){
+  return slots.filter(s=>s.days.length).map(s=>{
+    const from=HOURS[s.from]?.label||s.from;
+    const to=HOURS[s.to]?.label||s.to;
+    return `${s.days.join('، ')} من ${from} إلى ${to}`;
+  }).join('\n');
+}
+
 function buildLeaderPicker(servants){
   const sec=document.getElementById('leaderPickerSection');
   if(!leaderData.length)leaderData=[{name:'',traits:[]}];
@@ -636,7 +714,7 @@ function removeLeaderRow(i){leaderData.splice(i,1);if(!leaderData.length)leaderD
 async function saveServantSurvey(){
   const svId=currentUser.servantId;
   setBtn('submitSurveyBtn','جاري الإرسال...',true);
-  const payload={servant_id:svId,positives:document.getElementById('sPositives').value,negatives:document.getElementById('sNegatives').value,leader_data:leaderData,suitable_times:document.getElementById('sSuitableTimes').value,unsuitable_times:document.getElementById('sUnsuitableTimes').value,saved_at:new Date().toLocaleString('ar-EG')};
+  const payload={servant_id:svId,positives:document.getElementById('sPositives').value,negatives:document.getElementById('sNegatives').value,leader_data:leaderData,suitable_slots:suitableSlots,unsuitable_slots:unsuitableSlots,suitable_times:slotsToText(suitableSlots),unsuitable_times:slotsToText(unsuitableSlots),saved_at:new Date().toLocaleString('ar-EG')};
   const {data:existing}=await sb.from('surveys').select('id').eq('servant_id',svId).single();
   if(existing){await sb.from('surveys').update(payload).eq('servant_id',svId);}
   else{payload.id='sur_'+Date.now();await sb.from('surveys').insert(payload);}
