@@ -108,7 +108,7 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
   <div class="logo-area">
     <div class="logo-circle">⛪</div>
     <h1>كنيسة الملاك والروماني</h1>
-    <p style="font-size:13px;color:#777;margin-top:5px;">الأمانة العامة للخدمة</p>
+    <p style="font-size:13px;color:#777;margin-top:5px;">أمانة الخدمة العامة</p>
   </div>
   <div class="card">
     <label>اسم المستخدم</label>
@@ -219,13 +219,27 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
 <!-- SERVANT — الخادم (يملا استطلاعه بسرية) -->
 <div id="servantPage" class="page">
   <div class="header">
-    <div>
-      <h2 id="servantPageName">استطلاع رأي الخادم</h2>
-      <p style="font-size:12px;color:#777;margin-top:2px;" id="servantPageStage"></p>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="servantAvatar" onclick="triggerAvatarUpload()" style="width:48px;height:48px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;overflow:hidden;border:2px solid #ddd;flex-shrink:0;" title="اضغط لتغيير الصورة">
+        👤
+      </div>
+      <div>
+        <h2 id="servantPageName">استطلاع رأي الخادم</h2>
+        <p style="font-size:12px;color:#777;margin-top:2px;" id="servantPageStage"></p>
+      </div>
     </div>
     <button class="icon-btn" onclick="doLogout()">🚪</button>
   </div>
+  <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)"/>
   <div class="card">
+    <!-- بيانات الخادم الشخصية -->
+    <div style="background:#f9f9f7;border-radius:10px;padding:12px 14px;margin-bottom:1rem;border:1px solid #eee;">
+      <p style="font-size:13px;font-weight:600;color:#555;margin-bottom:8px;">بياناتي الشخصية</p>
+      <label style="margin-top:0;">رقم الموبايل</label>
+      <input type="tel" id="sMobile" placeholder="مثال: 01012345678"/>
+      <button class="btn btn-primary" onclick="saveServantProfile()" style="margin-top:8px;padding:7px;">💾 حفظ البيانات الشخصية</button>
+    </div>
+
     <div class="info-box">📋 إجاباتك سرية ولن يطلع عليها إلا الأمانة العامة للخدمة فقط</div>
 
     <label>إيجابيات الخدمة</label>
@@ -555,13 +569,20 @@ async function exportStageServants(){
 }
 
 // ===== SERVANT =====
+let currentServantId=null;
 async function loadServantPage(sv){
+  currentServantId=sv.id;
   const {data:stage}=await sb.from('stages').select('name').eq('id',sv.stage_id).single();
-  // load all servants in same stage for leader picker
   const {data:stageServants}=await sb.from('servants').select('id,name').eq('stage_id',sv.stage_id).order('name');
   const othersInStage=(stageServants||[]).filter(s=>s.id!==sv.id);
   document.getElementById('servantPageName').textContent='أهلاً، '+sv.name;
   document.getElementById('servantPageStage').textContent='خدمة: '+(stage?.name||'');
+  // avatar
+  const avatarEl=document.getElementById('servantAvatar');
+  if(sv.avatar_url){avatarEl.innerHTML=`<img src="${sv.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;} 
+  else{avatarEl.textContent='👤';}
+  // mobile
+  document.getElementById('sMobile').value=sv.mobile||'';
   const {data:existing}=await sb.from('surveys').select('*').eq('servant_id',sv.id).single();
   document.getElementById('sPositives').value=existing?.positives||'';
   document.getElementById('sNegatives').value=existing?.negatives||'';
@@ -569,13 +590,11 @@ async function loadServantPage(sv){
   unsuitableSlots=existing?.unsuitable_slots||[];
   renderTimePicker('suitable');
   renderTimePicker('unsuitable');
-  // leader picker
   leaderData=existing?.leader_data||[];
   buildLeaderPicker(othersInStage);
   const btn=document.getElementById('submitSurveyBtn');
   if(existing?.saved_at){btn.textContent='✅ تم الإرسال — يمكنك التعديل وإعادة الإرسال';btn.style.background='#3B6D11';btn.style.borderColor='#3B6D11';}
   else{btn.textContent='💾 إرسال الاستطلاع';btn.style.background='#185FA5';btn.style.borderColor='#185FA5';}
-  // store for picker
   window._stageServants=othersInStage;
   showPage('servantPage');
 }
@@ -710,6 +729,32 @@ function toggleTrait(idx,trait,btn){
 }
 function addLeaderRow(){leaderData.push({name:'',traits:[]});buildLeaderPicker(window._stageServants||[]);}
 function removeLeaderRow(i){leaderData.splice(i,1);if(!leaderData.length)leaderData=[{name:'',traits:[]}];buildLeaderPicker(window._stageServants||[]);}
+
+function triggerAvatarUpload(){document.getElementById('avatarInput').click();}
+
+async function uploadAvatar(input){
+  const file=input.files[0];
+  if(!file)return;
+  if(file.size>2*1024*1024){toast('الصورة أكبر من 2MB','error');return;}
+  toast('جاري رفع الصورة...');
+  const ext=file.name.split('.').pop();
+  const path=`avatars/${currentServantId}.${ext}`;
+  // upload to supabase storage
+  const {data,error}=await sb.storage.from('avatars').upload(path,file,{upsert:true});
+  if(error){toast('خطأ في رفع الصورة','error');return;}
+  const {data:urlData}=sb.storage.from('avatars').getPublicUrl(path);
+  const url=urlData.publicUrl;
+  await sb.from('servants').update({avatar_url:url}).eq('id',currentServantId);
+  const avatarEl=document.getElementById('servantAvatar');
+  avatarEl.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;
+  toast('تم رفع الصورة ✓');
+}
+
+async function saveServantProfile(){
+  const mobile=document.getElementById('sMobile').value.trim();
+  await sb.from('servants').update({mobile}).eq('id',currentServantId);
+  toast('تم حفظ البيانات ✓');
+}
 
 async function saveServantSurvey(){
   const svId=currentUser.servantId;
