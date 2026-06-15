@@ -217,7 +217,7 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
     <button class="icon-btn" onclick="doLogout()">🚪</button>
   </div>
   <div class="card">
-    <div class="info-box">📋 إجاباتك سرية ولن يطلع عليها إلا الإدارة العليا فقط</div>
+    <div class="info-box">📋 إجاباتك سرية ولن يطلع عليها إلا الأمانة العامة للخدمة فقط</div>
 
     <label>إيجابيات الخدمة</label>
     <textarea id="sPositives" placeholder="ما الذي أعجبك في الخدمة هذا العام؟"></textarea>
@@ -232,25 +232,12 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
 
     <hr class="divider"/>
 
-    <label>جدول المواعيد</label>
-    <p style="font-size:12px;color:#777;margin-bottom:8px;">اضغط على الخانة مرة = مناسب 🟢 &nbsp;|&nbsp; مرتين = غير مناسب 🔴 &nbsp;|&nbsp; ثلاث مرات = محايد ⬜</p>
-    <div style="overflow-x:auto;">
-      <table id="timesTable">
-        <thead><tr>
-          <th style="text-align:right;">اليوم</th>
-          <th>8ص — 12م</th>
-          <th>12م — 4م</th>
-          <th>4م — 8م</th>
-          <th>8م — 12ل</th>
-        </tr></thead>
-        <tbody id="timesTableBody"></tbody>
-      </table>
-    </div>
-    <div style="display:flex;gap:16px;margin-top:8px;font-size:12px;flex-wrap:wrap;">
-      <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:14px;background:#eaf3de;border:1px solid #3b6d11;border-radius:3px;display:inline-block;"></span>مناسب</span>
-      <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:14px;background:#fcebeb;border:1px solid #a32d2d;border-radius:3px;display:inline-block;"></span>غير مناسب</span>
-      <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:14px;background:#fff;border:1px solid #ddd;border-radius:3px;display:inline-block;"></span>محايد</span>
-    </div>
+    <label>المواعيد التي تناسبك</label>
+    <textarea id="sSuitableTimes" placeholder="مثال: الجمعة من 5 عصراً لـ 8 مساءً، السبت صباحاً..."></textarea>
+
+    <label>المواعيد التي لا تناسبك</label>
+    <textarea id="sUnsuitableTimes" placeholder="مثال: الأحد صباحاً، الاثنين كل اليوم..."></textarea>
+
 
     <button class="btn btn-primary" id="submitSurveyBtn" onclick="saveServantSurvey()" style="margin-top:1.25rem;">💾 إرسال الاستطلاع</button>
   </div>
@@ -270,6 +257,25 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
     <input type="text" id="newServantRole" placeholder="مثال: خادم فريق الترانيم"/>
     <div class="modal-btns">
       <button class="btn btn-primary" onclick="saveNewServant()">إضافة</button>
+      <button class="btn" onclick="closeModals()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="editServantModal">
+  <div class="modal">
+    <h3>تعديل بيانات الخادم</h3>
+    <input type="hidden" id="editServantId"/>
+    <label>الاسم الكامل</label>
+    <input type="text" id="editServantName"/>
+    <label>اسم المستخدم</label>
+    <input type="text" id="editServantUser"/>
+    <label>كلمة المرور</label>
+    <input type="text" id="editServantPass"/>
+    <label>الدور / المهمة</label>
+    <input type="text" id="editServantRole"/>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="saveEditServant()">حفظ التعديلات</button>
       <button class="btn" onclick="closeModals()">إلغاء</button>
     </div>
   </div>
@@ -303,7 +309,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const SUPER={user:'admin',pass:'1234'};
 const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 const SLOTS=['8ص-12م','12م-4م','4م-8م','8م-12ل'];
-const TRAITS=['قوة','تعليم','حكمة','تدبير','تواضع','رعاية'];
+const TRAITS=['قدوة','تعليم','حكمة','تدبير','تواضع','رعاية'];
 
 let currentUser=null,currentStageId=null,currentStageServants=[],currentAdminReport=null,deleteTarget=null,allStages=[];
 let timesData={};// {day_slot: 'suitable'|'unsuitable'|'neutral'}
@@ -484,12 +490,32 @@ async function renderAdminServants(){
     <div><div class="item-name">${sv.name}</div><div class="item-meta">${sv.role} | 👤 ${sv.username}</div></div>
     <div class="actions-row">
       <span class="badge ${surveyedIds.has(sv.id)?'badge-done':'badge-pending'}">${surveyedIds.has(sv.id)?'ملأ الاستطلاع':'لم يملأ'}</span>
+      <button class="icon-btn" onclick='showEditServant(${JSON.stringify(sv)})'>✏️</button>
       <button class="btn-del icon-btn" onclick="askDelete('${sv.id}')">🗑</button>
     </div>
   </div>`).join('');
   buildServantTable(currentAdminReport?.servant_rows||{});
 }
 function showAddServantModal(){document.getElementById('addServantModal').classList.add('open');}
+function showEditServant(sv){
+  document.getElementById('editServantId').value=sv.id;
+  document.getElementById('editServantName').value=sv.name;
+  document.getElementById('editServantUser').value=sv.username;
+  document.getElementById('editServantPass').value=sv.password;
+  document.getElementById('editServantRole').value=sv.role;
+  document.getElementById('editServantModal').classList.add('open');
+}
+async function saveEditServant(){
+  const id=document.getElementById('editServantId').value;
+  const name=document.getElementById('editServantName').value.trim();
+  const user=document.getElementById('editServantUser').value.trim();
+  const pass=document.getElementById('editServantPass').value.trim();
+  const role=document.getElementById('editServantRole').value.trim();
+  if(!name||!user||!pass){toast('الرجاء ملء كل الحقول','error');return;}
+  const {error}=await sb.from('servants').update({name,username:user,password:pass,role:role||'خادم'}).eq('id',id);
+  if(error){toast('خطأ في الحفظ','error');return;}
+  closeModals();toast('تم التعديل ✓');await renderAdminServants();
+}
 async function saveNewServant(){
   const name=document.getElementById('newServantName').value.trim();
   const user=document.getElementById('newServantUser').value.trim();
@@ -522,9 +548,8 @@ async function loadServantPage(sv){
   const {data:existing}=await sb.from('surveys').select('*').eq('servant_id',sv.id).single();
   document.getElementById('sPositives').value=existing?.positives||'';
   document.getElementById('sNegatives').value=existing?.negatives||'';
-  // times
-  timesData=existing?.times_data||{};
-  buildTimesTable();
+  document.getElementById('sSuitableTimes').value=existing?.suitable_times||'';
+  document.getElementById('sUnsuitableTimes').value=existing?.unsuitable_times||'';
   // leader picker
   leaderData=existing?.leader_data||[];
   buildLeaderPicker(othersInStage);
@@ -611,7 +636,7 @@ function removeLeaderRow(i){leaderData.splice(i,1);if(!leaderData.length)leaderD
 async function saveServantSurvey(){
   const svId=currentUser.servantId;
   setBtn('submitSurveyBtn','جاري الإرسال...',true);
-  const payload={servant_id:svId,positives:document.getElementById('sPositives').value,negatives:document.getElementById('sNegatives').value,leader_data:leaderData,times_data:timesData,saved_at:new Date().toLocaleString('ar-EG')};
+  const payload={servant_id:svId,positives:document.getElementById('sPositives').value,negatives:document.getElementById('sNegatives').value,leader_data:leaderData,suitable_times:document.getElementById('sSuitableTimes').value,unsuitable_times:document.getElementById('sUnsuitableTimes').value,saved_at:new Date().toLocaleString('ar-EG')};
   const {data:existing}=await sb.from('surveys').select('id').eq('servant_id',svId).single();
   if(existing){await sb.from('surveys').update(payload).eq('servant_id',svId);}
   else{payload.id='sur_'+Date.now();await sb.from('surveys').insert(payload);}
@@ -625,8 +650,6 @@ async function saveServantSurvey(){
 function viewSurvey(sur,name){
   document.getElementById('svModalName').textContent='استطلاع — '+name;
   const ld=(sur.leader_data||[]).filter(l=>l.name).map(l=>`<li>${l.name}: ${l.traits.join('، ')||'—'}</li>`).join('');
-  const td=sur.times_data||{};
-  const timesRows=DAYS.map(day=>`<tr><td style="font-weight:600;padding:4px 6px;">${day}</td>${SLOTS.map(slot=>{const k=day+'_'+slot;const s=td[k]||'neutral';return`<td style="text-align:center;padding:4px;background:${s==='suitable'?'#eaf3de':s==='unsuitable'?'#fcebeb':'#fff'};color:${s==='suitable'?'#3b6d11':s==='unsuitable'?'#a32d2d':'#aaa'};">${s==='suitable'?'✓':s==='unsuitable'?'✗':'—'}</td>`;}).join('')}</tr>`).join('');
   document.getElementById('svModalContent').innerHTML=`<div style="font-size:13px;line-height:1.8;">
     <p><strong>إيجابيات:</strong><br/>${sur.positives||'—'}</p>
     <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
@@ -635,11 +658,9 @@ function viewSurvey(sur,name){
     <p><strong>القادة المقترحون:</strong></p>
     ${ld?`<ul style="margin:4px 0 0 16px;">${ld}</ul>`:'<p>—</p>'}
     <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
-    <p><strong>جدول المواعيد:</strong></p>
-    <div style="overflow-x:auto;margin-top:6px;"><table style="font-size:12px;width:100%;">
-      <tr><th style="padding:4px;">اليوم</th>${SLOTS.map(s=>`<th style="padding:4px;text-align:center;">${s}</th>`).join('')}</tr>
-      ${timesRows}
-    </table></div>
+    <p><strong>المواعيد المناسبة:</strong><br/>${sur.suitable_times||'—'}</p>
+    <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
+    <p><strong>المواعيد غير المناسبة:</strong><br/>${sur.unsuitable_times||'—'}</p>
     <p style="color:#aaa;font-size:11px;margin-top:8px;">تاريخ الإرسال: ${sur.saved_at||''}</p>
   </div>`;
   document.getElementById('surveyViewModal').classList.add('open');
