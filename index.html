@@ -108,7 +108,7 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
   <div class="logo-area">
     <div class="logo-circle">⛪</div>
     <h1>كنيسة الملاك والروماني</h1>
-    <p style="font-size:13px;color:#777;margin-top:5px;">الأمانة العامة للخدمة</p>
+    <p style="font-size:13px;color:#777;margin-top:5px;">أمانة الخدمة العامة</p>
   </div>
   <div class="card">
     <label>اسم المستخدم</label>
@@ -219,13 +219,27 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
 <!-- SERVANT — الخادم (يملا استطلاعه بسرية) -->
 <div id="servantPage" class="page">
   <div class="header">
-    <div>
-      <h2 id="servantPageName">استطلاع رأي الخادم</h2>
-      <p style="font-size:12px;color:#777;margin-top:2px;" id="servantPageStage"></p>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="servantAvatar" onclick="triggerAvatarUpload()" style="width:48px;height:48px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;overflow:hidden;border:2px solid #ddd;flex-shrink:0;" title="اضغط لتغيير الصورة">
+        👤
+      </div>
+      <div>
+        <h2 id="servantPageName">استطلاع رأي الخادم</h2>
+        <p style="font-size:12px;color:#777;margin-top:2px;" id="servantPageStage"></p>
+      </div>
     </div>
     <button class="icon-btn" onclick="doLogout()">🚪</button>
   </div>
+  <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)"/>
   <div class="card">
+    <!-- بيانات الخادم الشخصية -->
+    <div style="background:#f9f9f7;border-radius:10px;padding:12px 14px;margin-bottom:1rem;border:1px solid #eee;">
+      <p style="font-size:13px;font-weight:600;color:#555;margin-bottom:8px;">بياناتي الشخصية</p>
+      <label style="margin-top:0;">رقم الموبايل</label>
+      <input type="tel" id="sMobile" placeholder="مثال: 01012345678"/>
+      <button class="btn btn-primary" onclick="saveServantProfile()" style="margin-top:8px;padding:7px;">💾 حفظ البيانات الشخصية</button>
+    </div>
+
     <div class="info-box">📋 إجاباتك سرية ولن يطلع عليها إلا الأمانة العامة للخدمة فقط</div>
 
     <label>إيجابيات الخدمة</label>
@@ -419,10 +433,16 @@ async function renderSuperSurveys(){
     stageSvs.forEach(sv=>{
       const sur=(survs||[]).find(sr=>sr.servant_id===sv.id);
       html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f0f0;">
-        <span style="font-size:13px;">${sv.name} <span style="color:#aaa;font-size:11px;">${sv.role}</span></span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${sv.avatar_url?`<img src="${sv.avatar_url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid #eee;"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;font-size:14px;">👤</div>`}
+          <div>
+            <span style="font-size:13px;font-weight:500;">${sv.name}</span>
+            <span style="color:#aaa;font-size:11px;display:block;">${sv.role}${sv.mobile?' | 📱 '+sv.mobile:''}</span>
+          </div>
+        </div>
         <div class="actions-row">
           <span class="badge ${sur?'badge-done':'badge-pending'}">${sur?'مكتمل':'معلق'}</span>
-          ${sur?`<button class="icon-btn" onclick='viewSurvey(${JSON.stringify(sur)},${JSON.stringify(sv.name)})'>👁</button>`:''}
+          ${sur?`<button class="icon-btn" onclick='viewSurvey(${JSON.stringify(sur)},${JSON.stringify(sv)})'>👁</button>`:''}
         </div>
       </div>`;
     });
@@ -555,13 +575,20 @@ async function exportStageServants(){
 }
 
 // ===== SERVANT =====
+let currentServantId=null;
 async function loadServantPage(sv){
+  currentServantId=sv.id;
   const {data:stage}=await sb.from('stages').select('name').eq('id',sv.stage_id).single();
-  // load all servants in same stage for leader picker
   const {data:stageServants}=await sb.from('servants').select('id,name').eq('stage_id',sv.stage_id).order('name');
   const othersInStage=(stageServants||[]).filter(s=>s.id!==sv.id);
   document.getElementById('servantPageName').textContent='أهلاً، '+sv.name;
   document.getElementById('servantPageStage').textContent='خدمة: '+(stage?.name||'');
+  // avatar
+  const avatarEl=document.getElementById('servantAvatar');
+  if(sv.avatar_url){avatarEl.innerHTML=`<img src="${sv.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;} 
+  else{avatarEl.textContent='👤';}
+  // mobile
+  document.getElementById('sMobile').value=sv.mobile||'';
   const {data:existing}=await sb.from('surveys').select('*').eq('servant_id',sv.id).single();
   document.getElementById('sPositives').value=existing?.positives||'';
   document.getElementById('sNegatives').value=existing?.negatives||'';
@@ -569,13 +596,11 @@ async function loadServantPage(sv){
   unsuitableSlots=existing?.unsuitable_slots||[];
   renderTimePicker('suitable');
   renderTimePicker('unsuitable');
-  // leader picker
   leaderData=existing?.leader_data||[];
   buildLeaderPicker(othersInStage);
   const btn=document.getElementById('submitSurveyBtn');
   if(existing?.saved_at){btn.textContent='✅ تم الإرسال — يمكنك التعديل وإعادة الإرسال';btn.style.background='#3B6D11';btn.style.borderColor='#3B6D11';}
   else{btn.textContent='💾 إرسال الاستطلاع';btn.style.background='#185FA5';btn.style.borderColor='#185FA5';}
-  // store for picker
   window._stageServants=othersInStage;
   showPage('servantPage');
 }
@@ -711,6 +736,48 @@ function toggleTrait(idx,trait,btn){
 function addLeaderRow(){leaderData.push({name:'',traits:[]});buildLeaderPicker(window._stageServants||[]);}
 function removeLeaderRow(i){leaderData.splice(i,1);if(!leaderData.length)leaderData=[{name:'',traits:[]}];buildLeaderPicker(window._stageServants||[]);}
 
+function triggerAvatarUpload(){document.getElementById('avatarInput').click();}
+
+async function uploadAvatar(input){
+  const file=input.files[0];
+  if(!file)return;
+  if(file.size>2*1024*1024){toast('الصورة أكبر من 2MB','error');return;}
+  toast('جاري رفع الصورة...');
+  const ext=file.name.split('.').pop();
+  const path=`avatars/${currentServantId}_${Date.now()}.${ext}`;
+  const {error}=await sb.storage.from('avatars').upload(path,file,{upsert:true});
+  if(error){
+    // fallback: convert to base64 and save in DB directly
+    const reader=new FileReader();
+    reader.onload=async(e)=>{
+      const base64=e.target.result;
+      await sb.from('servants').update({avatar_url:base64}).eq('id',currentServantId);
+      const avatarEl=document.getElementById('servantAvatar');
+      avatarEl.innerHTML=`<img src="${base64}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;
+      toast('تم رفع الصورة ✓');
+    };
+    reader.readAsDataURL(file);
+    return;
+  }
+  const {data:urlData}=sb.storage.from('avatars').getPublicUrl(path);
+  const url=urlData.publicUrl+'?t='+Date.now();
+  await sb.from('servants').update({avatar_url:url}).eq('id',currentServantId);
+  const avatarEl=document.getElementById('servantAvatar');
+  avatarEl.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;
+  toast('تم رفع الصورة ✓');
+}
+
+async function saveServantProfile(){
+  const mobile=document.getElementById('sMobile').value.trim();
+  await sb.from('servants').update({mobile}).eq('id',currentServantId);
+  toast('تم حفظ البيانات ✓');
+  const btn=event.target;
+  btn.textContent='✅ تم الحفظ';
+  btn.style.background='#3B6D11';
+  btn.style.borderColor='#3B6D11';
+  setTimeout(()=>{btn.textContent='💾 حفظ البيانات الشخصية';btn.style.background='#185FA5';btn.style.borderColor='#185FA5';},2500);
+}
+
 async function saveServantSurvey(){
   const svId=currentUser.servantId;
   setBtn('submitSurveyBtn','جاري الإرسال...',true);
@@ -725,10 +792,23 @@ async function saveServantSurvey(){
 }
 
 // ===== VIEW SURVEY =====
-function viewSurvey(sur,name){
+function viewSurvey(sur,sv){
+  const name=typeof sv==='object'?sv.name:sv;
+  const avatar=typeof sv==='object'?sv.avatar_url:'';
+  const mobile=typeof sv==='object'?sv.mobile:'';
+  const role=typeof sv==='object'?sv.role:'';
   document.getElementById('svModalName').textContent='استطلاع — '+name;
   const ld=(sur.leader_data||[]).filter(l=>l.name).map(l=>`<li>${l.name}: ${l.traits.join('، ')||'—'}</li>`).join('');
   document.getElementById('svModalContent').innerHTML=`<div style="font-size:13px;line-height:1.8;">
+    <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#f9f9f7;border-radius:10px;margin-bottom:12px;">
+      ${avatar?`<img src="${avatar}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid #ddd;flex-shrink:0;"/>`:`<div style="width:52px;height:52px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">👤</div>`}
+      <div>
+        <p style="font-weight:600;font-size:14px;">${name}</p>
+        <p style="color:#777;font-size:12px;">${role}</p>
+        ${mobile?`<p style="color:#185fa5;font-size:12px;">📱 ${mobile}</p>`:''}
+      </div>
+    </div>
+    <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
     <p><strong>إيجابيات:</strong><br/>${sur.positives||'—'}</p>
     <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
     <p><strong>سلبيات:</strong><br/>${sur.negatives||'—'}</p>
@@ -757,12 +837,12 @@ async function exportAllReports(){
 async function exportAllSurveys(){
   const {data:svs}=await sb.from('servants').select('*');
   const {data:survs}=await sb.from('surveys').select('*');
-  let csv='\uFEFF';csv+='المرحلة,اسم الخادم,الدور,إيجابيات,سلبيات,القادة المقترحون,تاريخ الإرسال\n';
+  let csv='\uFEFF';csv+='المرحلة,اسم الخادم,الدور,رقم الموبايل,إيجابيات,سلبيات,القادة المقترحون,المواعيد المناسبة,المواعيد غير المناسبة,تاريخ الإرسال\n';
   allStages.forEach(s=>{
     (svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{
       const sr=(survs||[]).find(sr=>sr.servant_id===sv.id)||{};
       const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');
-      csv+=`"${s.name}","${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.saved_at||''}"\n`;
+      csv+=`"${s.name}","${sv.name}","${sv.role}","${sv.mobile||''}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.suitable_times||''}","${sr.unsuitable_times||''}","${sr.saved_at||''}"\n`;
     });
   });
   dl(csv,'استطلاعات_الخدام.csv');
