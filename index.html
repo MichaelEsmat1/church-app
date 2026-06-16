@@ -433,10 +433,16 @@ async function renderSuperSurveys(){
     stageSvs.forEach(sv=>{
       const sur=(survs||[]).find(sr=>sr.servant_id===sv.id);
       html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f0f0;">
-        <span style="font-size:13px;">${sv.name} <span style="color:#aaa;font-size:11px;">${sv.role}</span></span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${sv.avatar_url?`<img src="${sv.avatar_url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid #eee;"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;font-size:14px;">👤</div>`}
+          <div>
+            <span style="font-size:13px;font-weight:500;">${sv.name}</span>
+            <span style="color:#aaa;font-size:11px;display:block;">${sv.role}${sv.mobile?' | 📱 '+sv.mobile:''}</span>
+          </div>
+        </div>
         <div class="actions-row">
           <span class="badge ${sur?'badge-done':'badge-pending'}">${sur?'مكتمل':'معلق'}</span>
-          ${sur?`<button class="icon-btn" onclick='viewSurvey(${JSON.stringify(sur)},${JSON.stringify(sv.name)})'>👁</button>`:''}
+          ${sur?`<button class="icon-btn" onclick='viewSurvey(${JSON.stringify(sur)},${JSON.stringify(sv)})'>👁</button>`:''}
         </div>
       </div>`;
     });
@@ -786,10 +792,23 @@ async function saveServantSurvey(){
 }
 
 // ===== VIEW SURVEY =====
-function viewSurvey(sur,name){
+function viewSurvey(sur,sv){
+  const name=typeof sv==='object'?sv.name:sv;
+  const avatar=typeof sv==='object'?sv.avatar_url:'';
+  const mobile=typeof sv==='object'?sv.mobile:'';
+  const role=typeof sv==='object'?sv.role:'';
   document.getElementById('svModalName').textContent='استطلاع — '+name;
   const ld=(sur.leader_data||[]).filter(l=>l.name).map(l=>`<li>${l.name}: ${l.traits.join('، ')||'—'}</li>`).join('');
   document.getElementById('svModalContent').innerHTML=`<div style="font-size:13px;line-height:1.8;">
+    <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#f9f9f7;border-radius:10px;margin-bottom:12px;">
+      ${avatar?`<img src="${avatar}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid #ddd;flex-shrink:0;"/>`:`<div style="width:52px;height:52px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">👤</div>`}
+      <div>
+        <p style="font-weight:600;font-size:14px;">${name}</p>
+        <p style="color:#777;font-size:12px;">${role}</p>
+        ${mobile?`<p style="color:#185fa5;font-size:12px;">📱 ${mobile}</p>`:''}
+      </div>
+    </div>
+    <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
     <p><strong>إيجابيات:</strong><br/>${sur.positives||'—'}</p>
     <hr style="margin:8px 0;border:none;border-top:1px solid #eee;"/>
     <p><strong>سلبيات:</strong><br/>${sur.negatives||'—'}</p>
@@ -818,12 +837,12 @@ async function exportAllReports(){
 async function exportAllSurveys(){
   const {data:svs}=await sb.from('servants').select('*');
   const {data:survs}=await sb.from('surveys').select('*');
-  let csv='\uFEFF';csv+='المرحلة,اسم الخادم,الدور,إيجابيات,سلبيات,القادة المقترحون,تاريخ الإرسال\n';
+  let csv='\uFEFF';csv+='المرحلة,اسم الخادم,الدور,رقم الموبايل,إيجابيات,سلبيات,القادة المقترحون,المواعيد المناسبة,المواعيد غير المناسبة,تاريخ الإرسال\n';
   allStages.forEach(s=>{
     (svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{
       const sr=(survs||[]).find(sr=>sr.servant_id===sv.id)||{};
       const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');
-      csv+=`"${s.name}","${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.saved_at||''}"\n`;
+      csv+=`"${s.name}","${sv.name}","${sv.role}","${sv.mobile||''}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.suitable_times||''}","${sr.unsuitable_times||''}","${sr.saved_at||''}"\n`;
     });
   });
   dl(csv,'استطلاعات_الخدام.csv');
