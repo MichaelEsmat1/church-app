@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>كنيسة الملاك والروماني — نظام الخدمة</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:system-ui,sans-serif;background:#f4f4f0;color:#1a1a1a;direction:rtl;min-height:100vh;}
@@ -138,13 +139,13 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
     <div class="card">
       <p class="section-title">إضافة مرحلة جديدة</p>
       <label>اسم الخدمة / المرحلة</label>
-      <input type="text" id="newStageName" placeholder="مثال: أعدادي، سنوي، خريجين..."/>
+      <input type="text" id="newStageName" placeholder="مثال: أعدادي، سنوي، خريجين..." required/>
       <label>اسم الأمين</label>
-      <input type="text" id="newAdminName" placeholder="مثال: مينا سمير"/>
+      <input type="text" id="newAdminName" placeholder="مثال: مينا سمير" required/>
       <label>اسم المستخدم للأمين</label>
-      <input type="text" id="newAdminUser" placeholder="مثال: 01012345678"/>
+      <input type="text" id="newAdminUser" placeholder="مثال: 01012345678" required/>
       <label>كلمة مرور الأمين</label>
-      <input type="text" id="newAdminPass" placeholder="مثال: 1234"/>
+      <input type="text" id="newAdminPass" placeholder="مثال: 1234" required/>
       <button class="btn btn-primary" onclick="addStage()">+ إضافة المرحلة</button>
     </div>
     <div id="superStagesList"><div class="loading">جاري التحميل...</div></div>
@@ -268,17 +269,36 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
 </div>
 
 <!-- MODALS -->
+<div class="modal-bg" id="editStageModal">
+  <div class="modal">
+    <h3>تعديل بيانات المرحلة</h3>
+    <input type="hidden" id="editStageId"/>
+    <label>اسم المرحلة</label>
+    <input type="text" id="editStageName"/>
+    <label>اسم الأمين</label>
+    <input type="text" id="editStageAdminName"/>
+    <label>اسم المستخدم</label>
+    <input type="text" id="editStageUser"/>
+    <label>كلمة المرور</label>
+    <input type="text" id="editStagePass"/>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="saveEditStage()">حفظ</button>
+      <button class="btn" onclick="closeModals()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="addServantModal">
   <div class="modal">
     <h3>إضافة خادم جديد</h3>
     <label>الاسم الكامل</label>
-    <input type="text" id="newServantName" placeholder="مثال: بولا مجدي"/>
+    <input type="text" id="newServantName" placeholder="مثال: بولا مجدي" required/>
     <label>اسم المستخدم (للدخول)</label>
-    <input type="text" id="newServantUser" placeholder="مثال: رقم الموبايل"/>
+    <input type="text" id="newServantUser" placeholder="مثال: رقم الموبايل" required/>
     <label>كلمة المرور</label>
-    <input type="text" id="newServantPass" placeholder="مثال: 1234"/>
+    <input type="text" id="newServantPass" placeholder="مثال: 1234" required/>
     <label>الدور / المهمة</label>
-    <input type="text" id="newServantRole" placeholder="مثال: خادم فريق الترانيم"/>
+    <input type="text" id="newServantRole" placeholder="مثال: خادم فريق الترانيم" required/>
     <div class="modal-btns">
       <button class="btn btn-primary" onclick="saveNewServant()">إضافة</button>
       <button class="btn" onclick="closeModals()">إلغاء</button>
@@ -387,7 +407,7 @@ async function addStage(){
   const aName=document.getElementById('newAdminName').value.trim();
   const aUser=document.getElementById('newAdminUser').value.trim();
   const aPass=document.getElementById('newAdminPass').value.trim();
-  if(!name||!aUser||!aPass){toast('الرجاء ملء كل الحقول','error');return;}
+  if(!name||!aUser||!aPass){toast('⚠️ جميع الحقول مطلوبة','error');return;}
   const {error}=await sb.from('stages').insert({id:'stage_'+Date.now(),name,admin_name:aName||aUser,username:aUser,password:aPass});
   if(error){toast('خطأ: اسم المستخدم موجود بالفعل','error');return;}
   ['newStageName','newAdminName','newAdminUser','newAdminPass'].forEach(i=>document.getElementById(i).value='');
@@ -396,12 +416,77 @@ async function addStage(){
 function renderSuperStages(){
   const el=document.getElementById('superStagesList');
   if(!allStages.length){el.innerHTML='<p style="font-size:13px;color:#aaa;">لا يوجد مراحل بعد.</p>';return;}
-  el.innerHTML=allStages.map(s=>`<div class="item">
-    <div style="flex:1;"><div class="item-name">${s.name}</div><div class="item-meta">أمين: ${s.admin_name} | 👤 ${s.username}</div></div>
-    <div class="actions-row"><span class="badge badge-blue">${s.username}</span><button class="btn-del icon-btn" onclick="deleteStage('${s.id}')">🗑</button></div>
-  </div>`).join('');
+  el.innerHTML=allStages.map(s=>{
+    const svCount=s._svCount||'';
+    return`<div class="item">
+      <div style="flex:1;">
+        <div class="item-name">${s.name}</div>
+        <div class="item-meta">أمين: ${s.admin_name} | 👤 ${s.username}</div>
+      </div>
+      <div class="actions-row">
+        <button class="icon-btn" onclick="superViewStage('${s.id}')">👁 عرض</button>
+        <button class="icon-btn" onclick="showEditStage('${s.id}')">✏️</button>
+        <button class="btn-del icon-btn" onclick="deleteStage('${s.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 async function deleteStage(id){if(!confirm('هتحذف المرحلة دي وكل بياناتها؟'))return;await sb.from('stages').delete().eq('id',id);toast('تم الحذف');await loadSuperPage();}
+
+function showEditStage(id){
+  const s=allStages.find(x=>x.id===id);if(!s)return;
+  document.getElementById('editStageId').value=s.id;
+  document.getElementById('editStageName').value=s.name;
+  document.getElementById('editStageAdminName').value=s.admin_name;
+  document.getElementById('editStageUser').value=s.username;
+  document.getElementById('editStagePass').value=s.password;
+  document.getElementById('editStageModal').classList.add('open');
+}
+async function saveEditStage(){
+  const id=document.getElementById('editStageId').value;
+  const name=document.getElementById('editStageName').value.trim();
+  const admin_name=document.getElementById('editStageAdminName').value.trim();
+  const username=document.getElementById('editStageUser').value.trim();
+  const password=document.getElementById('editStagePass').value.trim();
+  if(!name||!username||!password){toast('الرجاء ملء كل الحقول','error');return;}
+  await sb.from('stages').update({name,admin_name,username,password}).eq('id',id);
+  closeModals();toast('تم حفظ التعديلات ✓');await loadSuperPage();
+}
+async function superViewStage(stageId){
+  const stage=allStages.find(s=>s.id===stageId);if(!stage)return;
+  currentStageId=stageId;
+  document.getElementById('adminTitle').textContent='عرض — '+stage.name;
+  document.getElementById('adminSubtitle').textContent='المشرف العام | '+stage.admin_name;
+  const {data}=await sb.from('servants').select('*').eq('stage_id',stageId).order('created_at');
+  currentStageServants=data||[];
+  await loadAdminReportForm();
+  // add surveys tab for super admin view
+  const tabBar=document.querySelector('#adminPage .tab-bar');
+  if(!document.getElementById('tabSurveysBtn')){
+    const btn=document.createElement('button');
+    btn.className='tab';btn.id='tabSurveysBtn';
+    btn.textContent='استطلاعات الخدام';
+    btn.onclick=()=>switchAdminTab('aTabSurveysSuper');
+    tabBar.appendChild(btn);
+  }
+  // add surveys div if not exists
+  if(!document.getElementById('aTabSurveysSuper')){
+    const div=document.createElement('div');
+    div.id='aTabSurveysSuper';div.style.display='none';
+    div.innerHTML='<div id="superStagesSurveysList"></div>';
+    document.getElementById('adminPage').appendChild(div);
+  }
+  switchAdminTab('aTabReport');
+  // back button
+  document.getElementById('adminSubtitle').innerHTML=`${stage.admin_name} <button class="icon-btn" onclick="backToSuperFromStage()" style="margin-right:8px;">← رجوع</button>`;
+  showPage('adminPage');
+}
+function backToSuperFromStage(){
+  // remove extra tab if added
+  const btn=document.getElementById('tabSurveysBtn');if(btn)btn.remove();
+  const div=document.getElementById('aTabSurveysSuper');if(div)div.remove();
+  renderSuperStages();showPage('superPage');
+}
 
 async function renderSuperReports(){
   const el=document.getElementById('superReportsList');el.innerHTML='<div class="loading">جاري التحميل...</div>';
@@ -473,11 +558,38 @@ async function loadAdminPage(stage){
   showPage('adminPage');
 }
 function switchAdminTab(id){
-  ['aTabReport','aTabServants'].forEach(t=>document.getElementById(t).style.display=t===id?'block':'none');
-  document.querySelectorAll('#adminPage .tab').forEach((t,i)=>t.classList.toggle('active',['aTabReport','aTabServants'][i]===id));
+  ['aTabReport','aTabServants','aTabSurveysSuper'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=t===id?'block':'none';});
+  document.querySelectorAll('#adminPage .tab').forEach((t,i)=>{
+    const ids=['aTabReport','aTabServants','aTabSurveysSuper'];
+    t.classList.toggle('active',ids[i]===id);
+  });
   if(id==='aTabServants')renderAdminServants();
+  if(id==='aTabSurveysSuper')renderSuperStagesSurveys();
 }
-async function loadAdminReportForm(){
+async function renderSuperStagesSurveys(){
+  const el=document.getElementById('superStagesSurveysList');
+  if(!el)return;
+  el.innerHTML='<div class="loading">جاري التحميل...</div>';
+  const {data:survs}=await sb.from('surveys').select('*');
+  let html='';
+  const stageServants=currentStageServants;
+  if(!stageServants.length){el.innerHTML='<p style="font-size:13px;color:#aaa;">لا يوجد خدام.</p>';return;}
+  html+='<p class="section-title">استطلاعات خدام هذه المرحلة</p>';
+  stageServants.forEach(sv=>{
+    const sur=(survs||[]).find(s=>s.servant_id===sv.id);
+    html+=`<div class="item">
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${sv.avatar_url?`<img src="${sv.avatar_url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid #eee;"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;font-size:14px;">👤</div>`}
+        <div><div class="item-name">${sv.name}</div><div class="item-meta">${sv.role}${sv.mobile?' | 📱 '+sv.mobile:''}</div></div>
+      </div>
+      <div class="actions-row">
+        <span class="badge ${sur?'badge-done':'badge-pending'}">${sur?'مكتمل':'معلق'}</span>
+        ${sur?`<button class="icon-btn" onclick='viewSurvey(${JSON.stringify(sur)},${JSON.stringify(sv)})'>👁</button>`:''}
+      </div>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
   const {data:r}=await sb.from('admin_reports').select('*').eq('stage_id',currentStageId).single();
   currentAdminReport=r||null;
   document.getElementById('rServiceName').value=r?.service_name||'';
@@ -557,7 +669,7 @@ async function saveNewServant(){
   const user=document.getElementById('newServantUser').value.trim();
   const pass=document.getElementById('newServantPass').value.trim();
   const role=document.getElementById('newServantRole').value.trim();
-  if(!name||!user||!pass){toast('الرجاء ملء الاسم واسم المستخدم وكلمة المرور','error');return;}
+  if(!name||!user||!pass){toast('⚠️ الاسم واسم المستخدم وكلمة المرور مطلوبة','error');return;}
   const {error}=await sb.from('servants').insert({id:'sv_'+Date.now(),stage_id:currentStageId,name,username:user,password:pass,role:role||'خادم'});
   if(error){toast('خطأ: اسم المستخدم موجود بالفعل','error');return;}
   closeModals();['newServantName','newServantUser','newServantPass','newServantRole'].forEach(i=>document.getElementById(i).value='');
