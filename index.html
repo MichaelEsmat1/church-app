@@ -344,10 +344,12 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 const SUPABASE_URL='https://tporikleqmekhdriuepn.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwb3Jpa2xlcW1la2hkcml1ZXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NTAyMTMsImV4cCI6MjA5NzAyNjIxM30.u81rZB2d8B0KtbqZ72zGHmsP2Y-63vdSESc4NG05Itw';
-let sb;
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const SUPER={user:'malak.romani',pass:'MR@2025#service'};
 const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 const SLOTS=['8ص-12م','12م-4م','4م-8م','8م-12ل'];
@@ -587,6 +589,7 @@ async function renderSuperStagesSurveys(){
   });
   el.innerHTML=html;
 }
+async function loadAdminReportForm(){
   const {data:r}=await sb.from('admin_reports').select('*').eq('stage_id',currentStageId).single();
   currentAdminReport=r||null;
   document.getElementById('rServiceName').value=r?.service_name||'';
@@ -987,12 +990,7 @@ async function exportStageSurveys(stageId,stageName){
   (svs||[]).forEach(sv=>{const sr=(survs||[]).find(s=>s.servant_id===sv.id)||{};const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');csv+=`"${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.saved_at||''}"\n`;});
   dl(csv,`استطلاعات_${stageName}.csv`);
 }
-</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script>
-  sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 </script>
 </body>
 </html>
