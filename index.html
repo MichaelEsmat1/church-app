@@ -615,9 +615,22 @@ function buildServantTable(rows={}){
 let pendingRows={};
 function updateRow(svId,field,val){if(!pendingRows[svId])pendingRows[svId]={};pendingRows[svId][field]=val;}
 async function saveAdminReport(){
+  const serviceName=document.getElementById('rServiceName').value.trim();
+  const positives=document.getElementById('rPositives').value.trim();
+  const negatives=document.getElementById('rNegatives').value.trim();
+  if(!serviceName){toast('⚠️ اسم الخدمة مطلوب','error');return;}
+  if(!positives){toast('⚠️ إيجابيات الخدمة مطلوبة','error');return;}
+  if(!negatives){toast('⚠️ سلبيات الخدمة مطلوبة','error');return;}
+  if(!adminLeaderData.length||!adminLeaderData[0].name){toast('⚠️ يرجى اختيار خادم في قسم إمكانيات القائد','error');return;}
+  const emptyRows=currentStageServants.filter(sv=>{
+    const row={...(currentAdminReport?.servant_rows||{}),...pendingRows};
+    const r=row[sv.id]||{};
+    return !r.attendance||!r.recommend;
+  });
+  if(emptyRows.length>0){toast(`⚠️ يرجى ملء الحضور والترشيح لكل الخدام (${emptyRows.length} خادم ناقص)`,'error');return;}
   setBtn('saveReportBtn','جاري الحفظ...',true);
   const mergedRows={...(currentAdminReport?.servant_rows||{}),...pendingRows};
-  const payload={stage_id:currentStageId,service_name:document.getElementById('rServiceName').value,positives:document.getElementById('rPositives').value,negatives:document.getElementById('rNegatives').value,leader_data:adminLeaderData,servant_rows:mergedRows,saved_at:new Date().toLocaleString('ar-EG')};
+  const payload={stage_id:currentStageId,service_name:serviceName,positives,negatives,leader_data:adminLeaderData,servant_rows:mergedRows,saved_at:new Date().toLocaleString('ar-EG')};
   if(currentAdminReport){await sb.from('admin_reports').update(payload).eq('stage_id',currentStageId);}
   else{payload.id='rep_'+Date.now();await sb.from('admin_reports').insert(payload);}
   pendingRows={};await loadAdminReportForm();toast('تم حفظ التقرير ✓');setBtn('saveReportBtn','💾 حفظ التقرير',false);
@@ -677,13 +690,6 @@ async function saveNewServant(){
 }
 function askDelete(id){deleteTarget=id;document.getElementById('deleteModal').classList.add('open');}
 async function confirmDelete(){if(!deleteTarget)return;await sb.from('servants').delete().eq('id',deleteTarget);closeModals();deleteTarget=null;toast('تم الحذف');await renderAdminServants();}
-async function exportStageServants(){
-  const {data:r}=await sb.from('admin_reports').select('servant_rows').eq('stage_id',currentStageId).single();
-  const rows=r?.servant_rows||{};let csv='\uFEFF';
-  csv+='الاسم,الدور,نسبة الحضور,مرات الافتقاد,مرات تحضير الدرس,ترشيح,ملاحظات\n';
-  currentStageServants.forEach(sv=>{const row=rows[sv.id]||{};csv+=`"${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;});
-  dl(csv,'خدام_المرحلة.csv');
-}
 
 // ===== SERVANT =====
 let currentServantId=null;
@@ -890,9 +896,15 @@ async function saveServantProfile(){
 }
 
 async function saveServantSurvey(){
+  const positives=document.getElementById('sPositives').value.trim();
+  const negatives=document.getElementById('sNegatives').value.trim();
+  if(!positives){toast('⚠️ إيجابيات الخدمة مطلوبة','error');return;}
+  if(!negatives){toast('⚠️ سلبيات الخدمة مطلوبة','error');return;}
+  if(!leaderData.length||!leaderData[0].name){toast('⚠️ يرجى اختيار خادم في قسم سمات القائد','error');return;}
+  if(suitableSlots.length===0){toast('⚠️ يرجى إضافة موعد مناسب على الأقل','error');return;}
   const svId=currentUser.servantId;
   setBtn('submitSurveyBtn','جاري الإرسال...',true);
-  const payload={servant_id:svId,positives:document.getElementById('sPositives').value,negatives:document.getElementById('sNegatives').value,leader_data:leaderData,suitable_slots:suitableSlots,unsuitable_slots:unsuitableSlots,suitable_times:slotsToText(suitableSlots),unsuitable_times:slotsToText(unsuitableSlots),saved_at:new Date().toLocaleString('ar-EG')};
+  const payload={servant_id:svId,positives,negatives,leader_data:leaderData,suitable_slots:suitableSlots,unsuitable_slots:unsuitableSlots,suitable_times:slotsToText(suitableSlots),unsuitable_times:slotsToText(unsuitableSlots),saved_at:new Date().toLocaleString('ar-EG')};
   const {data:existing}=await sb.from('surveys').select('id').eq('servant_id',svId).single();
   if(existing){await sb.from('surveys').update(payload).eq('servant_id',svId);}
   else{payload.id='sur_'+Date.now();await sb.from('surveys').insert(payload);}
@@ -935,60 +947,147 @@ function viewSurvey(sur,sv){
   document.getElementById('surveyViewModal').classList.add('open');
 }
 
-// ===== EXPORT =====
-function dl(csv,name){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download=name;a.click();toast('تم التصدير ✓');}
+// ===== EXPORT XLSX =====
+function dlXlsx(wb, name){
+  XLSX.writeFile(wb, name+'.xlsx');
+  toast('تم التصدير ✓');
+}
+
+function makeXlsxWb(sheets){
+  // sheets = [{name, headers, rows}]
+  const wb=XLSX.utils.book_new();
+  sheets.forEach(s=>{
+    const data=[s.headers,...s.rows];
+    const ws=XLSX.utils.aoa_to_sheet(data);
+    // Style header row width
+    ws['!cols']=s.headers.map(h=>({wch:Math.max(h.length*2,15)}));
+    XLSX.utils.book_append_sheet(wb,ws,s.name.substring(0,31));
+  });
+  return wb;
+}
 
 async function exportAllReports(){
   const {data:reps}=await sb.from('admin_reports').select('*');
-  let csv='\uFEFF';csv+='المرحلة,اسم الخدمة,إيجابيات,سلبيات,إمكانيات القائد,تاريخ الحفظ\n';
-  allStages.forEach(s=>{const r=(reps||[]).find(r=>r.stage_id===s.id)||{};csv+=`"${s.name}","${r.service_name||''}","${(r.positives||'').replace(/"/g,'""')}","${(r.negatives||'').replace(/"/g,'""')}","${r.leader_traits||''}","${r.saved_at||''}"\n`;});
-  dl(csv,'تقارير_الأمناء.csv');
+  const headers=['المرحلة','اسم الخدمة','إيجابيات','سلبيات','القادة المقترحون','تاريخ الحفظ'];
+  const rows=allStages.map(s=>{
+    const r=(reps||[]).find(r=>r.stage_id===s.id)||{};
+    const ld=(r.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');
+    return[s.name,r.service_name||'',r.positives||'',r.negatives||'',ld,r.saved_at||''];
+  });
+  dlXlsx(makeXlsxWb([{name:'تقارير الأمناء',headers,rows}]),'تقارير_الأمناء');
 }
 
 async function exportAllSurveys(){
   const {data:svs}=await sb.from('servants').select('*');
   const {data:survs}=await sb.from('surveys').select('*');
-  let csv='\uFEFF';csv+='المرحلة,اسم الخادم,الدور,رقم الموبايل,إيجابيات,سلبيات,القادة المقترحون,المواعيد المناسبة,المواعيد غير المناسبة,تاريخ الإرسال\n';
+  const headers=['المرحلة','اسم الخادم','الدور','رقم الموبايل','إيجابيات','سلبيات','القادة المقترحون','المواعيد المناسبة','المواعيد غير المناسبة','تاريخ الإرسال'];
+  const rows=[];
   allStages.forEach(s=>{
     (svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{
       const sr=(survs||[]).find(sr=>sr.servant_id===sv.id)||{};
       const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');
-      csv+=`"${s.name}","${sv.name}","${sv.role}","${sv.mobile||''}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.suitable_times||''}","${sr.unsuitable_times||''}","${sr.saved_at||''}"\n`;
+      rows.push([s.name,sv.name,sv.role,sv.mobile||'',sr.positives||'',sr.negatives||'',ld,sr.suitable_times||'',sr.unsuitable_times||'',sr.saved_at||'']);
     });
   });
-  dl(csv,'استطلاعات_الخدام.csv');
+  dlXlsx(makeXlsxWb([{name:'استطلاعات الخدام',headers,rows}]),'استطلاعات_الخدام');
 }
 
 async function exportMegaAll(){
   const {data:reps}=await sb.from('admin_reports').select('*');
   const {data:svs}=await sb.from('servants').select('*');
   const {data:survs}=await sb.from('surveys').select('*');
-  let csv='\uFEFF';
-  csv+='=== تقارير الأمناء ===\nالمرحلة,اسم الخدمة,إيجابيات,سلبيات,إمكانيات القائد,تاريخ الحفظ\n';
-  allStages.forEach(s=>{const r=(reps||[]).find(r=>r.stage_id===s.id)||{};csv+=`"${s.name}","${r.service_name||''}","${(r.positives||'').replace(/"/g,'""')}","${(r.negatives||'').replace(/"/g,'""')}","${r.leader_traits||''}","${r.saved_at||''}"\n`;});
-  csv+='\n=== جداول الخدام ===\nالمرحلة,اسم الخادم,الدور,نسبة الحضور,مرات الافتقاد,مرات تحضير الدرس,ترشيح,ملاحظات\n';
-  allStages.forEach(s=>{const r=(reps||[]).find(r=>r.stage_id===s.id)||{};const rows=r.servant_rows||{};(svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{const row=rows[sv.id]||{};csv+=`"${s.name}","${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;});});
-  csv+='\n=== استطلاعات الخدام ===\nالمرحلة,اسم الخادم,الدور,إيجابيات,سلبيات,القادة المقترحون,تاريخ الإرسال\n';
-  allStages.forEach(s=>{(svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{const sr=(survs||[]).find(sr=>sr.servant_id===sv.id)||{};const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');csv+=`"${s.name}","${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.saved_at||''}"\n`;});});
-  dl(csv,'كل_البيانات.csv');
+
+  // Sheet 1: تقارير الأمناء
+  const rHeaders=['المرحلة','اسم الخدمة','إيجابيات','سلبيات','القادة المقترحون','تاريخ الحفظ'];
+  const rRows=allStages.map(s=>{
+    const r=(reps||[]).find(r=>r.stage_id===s.id)||{};
+    const ld=(r.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');
+    return[s.name,r.service_name||'',r.positives||'',r.negatives||'',ld,r.saved_at||''];
+  });
+
+  // Sheet 2: جداول الخدام
+  const svHeaders=['المرحلة','اسم الخادم','الدور','نسبة الحضور','مرات الافتقاد','مرات تحضير الدرس','ترشيح للعام القادم','ملاحظات'];
+  const svRows=[];
+  allStages.forEach(s=>{
+    const r=(reps||[]).find(r=>r.stage_id===s.id)||{};
+    const rows=r.servant_rows||{};
+    (svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{
+      const row=rows[sv.id]||{};
+      svRows.push([s.name,sv.name,sv.role,row.attendance||'',row.visits||'',row.lessons||'',row.recommend||'',row.notes||'']);
+    });
+  });
+
+  // Sheet 3: استطلاعات الخدام
+  const surHeaders=['المرحلة','اسم الخادم','الدور','رقم الموبايل','إيجابيات','سلبيات','القادة المقترحون','المواعيد المناسبة','المواعيد غير المناسبة','تاريخ الإرسال'];
+  const surRows=[];
+  allStages.forEach(s=>{
+    (svs||[]).filter(sv=>sv.stage_id===s.id).forEach(sv=>{
+      const sr=(survs||[]).find(sr=>sr.servant_id===sv.id)||{};
+      const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');
+      surRows.push([s.name,sv.name,sv.role,sv.mobile||'',sr.positives||'',sr.negatives||'',ld,sr.suitable_times||'',sr.unsuitable_times||'',sr.saved_at||'']);
+    });
+  });
+
+  dlXlsx(makeXlsxWb([
+    {name:'تقارير الأمناء',headers:rHeaders,rows:rRows},
+    {name:'جداول الخدام',headers:svHeaders,rows:svRows},
+    {name:'استطلاعات الخدام',headers:surHeaders,rows:surRows},
+  ]),'كل_البيانات');
 }
 
 async function exportStageReport(stageId,stageName){
   const {data:r}=await sb.from('admin_reports').select('*').eq('stage_id',stageId).single();
   const {data:svs}=await sb.from('servants').select('*').eq('stage_id',stageId);
-  const rows=r?.servant_rows||{};let csv='\uFEFF';
-  csv+=`تقرير أمين الخدمة — ${stageName}\nاسم الخدمة,"${r?.service_name||''}"\nإيجابيات,"${(r?.positives||'').replace(/"/g,'""')}"\nسلبيات,"${(r?.negatives||'').replace(/"/g,'""')}"\nإمكانيات القائد,"${r?.leader_traits||''}"\n\n`;
-  csv+='اسم الخادم,الدور,نسبة الحضور,مرات الافتقاد,مرات تحضير الدرس,ترشيح,ملاحظات\n';
-  (svs||[]).forEach(sv=>{const row=rows[sv.id]||{};csv+=`"${sv.name}","${sv.role}","${row.attendance||''}","${row.visits||''}","${row.lessons||''}","${row.recommend||''}","${(row.notes||'').replace(/"/g,'""')}"\n`;});
-  dl(csv,`تقرير_${stageName}.csv`);
+  const rows=r?.servant_rows||{};
+  const ld=(r?.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}: ${l.traits.join('، ')}`).join('\n');
+
+  // Sheet 1: ملخص التقرير
+  const summaryData=[
+    ['اسم الخدمة',r?.service_name||''],
+    ['إيجابيات',r?.positives||''],
+    ['سلبيات',r?.negatives||''],
+    ['إمكانيات القائد الناجح',ld],
+    ['تاريخ الحفظ',r?.saved_at||''],
+  ];
+  const wsSummary=XLSX.utils.aoa_to_sheet(summaryData);
+  wsSummary['!cols']=[{wch:25},{wch:60}];
+
+  // Sheet 2: جدول الخدام
+  const headers=['اسم الخادم','الدور','نسبة الحضور','مرات الافتقاد','مرات تحضير الدرس','ترشيح للعام القادم','ملاحظات'];
+  const svRows=(svs||[]).map(sv=>{
+    const row=rows[sv.id]||{};
+    return[sv.name,sv.role,row.attendance||'',row.visits||'',row.lessons||'',row.recommend||'',row.notes||''];
+  });
+  const wsServants=XLSX.utils.aoa_to_sheet([headers,...svRows]);
+  wsServants['!cols']=headers.map(h=>({wch:Math.max(h.length*2,15)}));
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,wsSummary,'ملخص التقرير');
+  XLSX.utils.book_append_sheet(wb,wsServants,'جدول الخدام');
+  dlXlsx(wb,`تقرير_${stageName}`);
 }
 
 async function exportStageSurveys(stageId,stageName){
   const {data:svs}=await sb.from('servants').select('*').eq('stage_id',stageId);
   const {data:survs}=await sb.from('surveys').select('*');
-  let csv='\uFEFF';csv+='اسم الخادم,الدور,إيجابيات,سلبيات,القادة المقترحون,تاريخ الإرسال\n';
-  (svs||[]).forEach(sv=>{const sr=(survs||[]).find(s=>s.servant_id===sv.id)||{};const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');csv+=`"${sv.name}","${sv.role}","${(sr.positives||'').replace(/"/g,'""')}","${(sr.negatives||'').replace(/"/g,'""')}","${ld}","${sr.saved_at||''}"\n`;});
-  dl(csv,`استطلاعات_${stageName}.csv`);
+  const headers=['اسم الخادم','الدور','رقم الموبايل','إيجابيات','سلبيات','القادة المقترحون','المواعيد المناسبة','المواعيد غير المناسبة','تاريخ الإرسال'];
+  const rows=(svs||[]).map(sv=>{
+    const sr=(survs||[]).find(s=>s.servant_id===sv.id)||{};
+    const ld=(sr.leader_data||[]).filter(l=>l.name).map(l=>`${l.name}(${l.traits.join('-')})`).join(' / ');
+    return[sv.name,sv.role,sv.mobile||'',sr.positives||'',sr.negatives||'',ld,sr.suitable_times||'',sr.unsuitable_times||'',sr.saved_at||''];
+  });
+  dlXlsx(makeXlsxWb([{name:'استطلاعات',headers,rows}]),`استطلاعات_${stageName}`);
+}
+
+async function exportStageServants(){
+  const {data:r}=await sb.from('admin_reports').select('servant_rows').eq('stage_id',currentStageId).single();
+  const rows_data=r?.servant_rows||{};
+  const headers=['الاسم','الدور','نسبة الحضور','مرات الافتقاد','مرات تحضير الدرس','ترشيح للعام القادم','ملاحظات'];
+  const rows=currentStageServants.map(sv=>{
+    const row=rows_data[sv.id]||{};
+    return[sv.name,sv.role,row.attendance||'',row.visits||'',row.lessons||'',row.recommend||'',row.notes||''];
+  });
+  dlXlsx(makeXlsxWb([{name:'الخدام',headers,rows}]),'خدام_المرحلة');
 }
 document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 </script>
