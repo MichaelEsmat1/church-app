@@ -429,8 +429,6 @@ const {
   password: p
 });
 
-console.log('ADMIN AUTH DATA', adminAuthData);
-console.log('ADMIN AUTH ERROR', adminAuthError);
 
 if(adminAuthData?.user){
 
@@ -440,8 +438,7 @@ if(adminAuthData?.user){
     .eq('auth_user_id', adminAuthData.user.id)
     .single();
 
-  console.log('STAGE DATA', stg);
-  console.log('STAGE ERROR', stgError);
+
 
   if(stg){
     currentUser={
