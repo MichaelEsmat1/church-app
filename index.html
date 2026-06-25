@@ -419,12 +419,13 @@ if(authData?.user){
   return;
 }
 // Admin Auth Login (Pilot Test)
-const { data: authData } = await sb.auth.signInWithPassword({
-  email: `${u}@church.local`,
-  password: p
-});
+const { data: adminAuthData } =
+  await sb.auth.signInWithPassword({
+    email: `${u}@church.local`,
+    password: p
+  });
 
-if(authData?.user){
+if(adminAuthData?.user){
   // Stage Admin Login
   const {data:stg}=await sb
     .from('stages')
