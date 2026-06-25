@@ -397,7 +397,6 @@ async function doLogin(){
     .eq('username', u)
     .eq('password', p)
     .single();
-console.log(superAdmin);
   if(superAdmin){
     currentUser={
       role:'super',
