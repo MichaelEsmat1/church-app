@@ -236,6 +236,15 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
       <label style="margin-top:0;">رقم الموبايل</label>
       <input type="tel" id="sMobile" placeholder="مثال: 01012345678"/>
       <button class="btn btn-primary" onclick="saveServantProfile()" style="margin-top:8px;padding:7px;">💾 حفظ البيانات الشخصية</button>
+      <hr style="border:none;border-top:1px solid #eee;margin:1rem 0;"/>
+      <p style="font-size:13px;font-weight:600;color:#555;margin-bottom:8px;">🔐 تغيير كلمة المرور</p>
+      <label style="margin-top:0;">كلمة المرور الحالية</label>
+      <input type="password" id="sCurrentPass" placeholder="أدخل كلمة المرور الحالية"/>
+      <label>كلمة المرور الجديدة</label>
+      <input type="password" id="sNewPass" placeholder="أدخل كلمة المرور الجديدة (6 أحرف على الأقل)"/>
+      <label>تأكيد كلمة المرور الجديدة</label>
+      <input type="password" id="sConfirmPass" placeholder="أعد كتابة كلمة المرور الجديدة"/>
+      <button class="btn" onclick="changeServantPassword()" style="margin-top:8px;padding:7px;background:#185FA5;color:#fff;border-color:#185FA5;">🔑 تغيير كلمة المرور</button>
     </div>
 
     <div class="info-box">📋 إجاباتك سرية ولن يطلع عليها إلا الأمانة العامة للخدمة فقط</div>
@@ -893,6 +902,23 @@ async function saveServantProfile(){
   btn.style.background='#3B6D11';
   btn.style.borderColor='#3B6D11';
   setTimeout(()=>{btn.textContent='💾 حفظ البيانات الشخصية';btn.style.background='#185FA5';btn.style.borderColor='#185FA5';},2500);
+}
+
+async function changeServantPassword(){
+  const current=document.getElementById('sCurrentPass').value;
+  const newPass=document.getElementById('sNewPass').value;
+  const confirm=document.getElementById('sConfirmPass').value;
+  if(!current||!newPass||!confirm){toast('⚠️ يرجى ملء جميع حقول كلمة المرور','error');return;}
+  if(newPass.length<6){toast('⚠️ كلمة المرور الجديدة 6 أحرف على الأقل','error');return;}
+  if(newPass!==confirm){toast('⚠️ كلمة المرور الجديدة غير متطابقة','error');return;}
+  const {data:sv}=await sb.from('servants').select('password').eq('id',currentServantId).single();
+  if(!sv||sv.password!==current){toast('⚠️ كلمة المرور الحالية غير صحيحة','error');return;}
+  const {error}=await sb.from('servants').update({password:newPass}).eq('id',currentServantId);
+  if(error){toast('حدث خطأ، حاول تاني','error');return;}
+  document.getElementById('sCurrentPass').value='';
+  document.getElementById('sNewPass').value='';
+  document.getElementById('sConfirmPass').value='';
+  toast('✅ تم تغيير كلمة المرور بنجاح');
 }
 
 async function saveServantSurvey(){
