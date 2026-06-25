@@ -389,6 +389,7 @@ async function doLogin(){
 
   err.style.display='none';
   setBtn('loginBtn','جاري الدخول...',true);
+if(u.includes('@')){
 
  const { data: authData, error: authError } =
   await sb.auth.signInWithPassword({
@@ -417,6 +418,7 @@ if(authData?.user){
   await loadSuperPage();
   setBtn('loginBtn','دخول',false);
   return;
+}
 }
 // Admin Auth Login (Pilot Test)
 const {
