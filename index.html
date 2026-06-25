@@ -431,13 +431,15 @@ console.log('ADMIN AUTH DATA', adminAuthData);
 console.log('ADMIN AUTH ERROR', adminAuthError);
 
 if(adminAuthData?.user){
-  // Stage Admin Login
-  const {data:stg}=await sb
+
+  const { data: stg, error: stgError } = await sb
     .from('stages')
     .select('*')
-    .eq('username',u)
-    .eq('password',p)
+    .eq('auth_user_id', adminAuthData.user.id)
     .single();
+
+  console.log('STAGE DATA', stg);
+  console.log('STAGE ERROR', stgError);
 
   if(stg){
     currentUser={
