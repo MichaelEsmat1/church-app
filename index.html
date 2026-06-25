@@ -390,35 +390,34 @@ async function doLogin(){
   err.style.display='none';
   setBtn('loginBtn','جاري الدخول...',true);
 
-  // Super Admin Login
-  const { data: superAdmin } = await sb
-    .from('super_admin')
-    .select('*')
-    .eq('username', u)
-    .eq('password', p)
-    .single();
-  if(superAdmin){
-    currentUser={
-      role:'super',
-      id:superAdmin.id,
-      username:superAdmin.username
-    };
+ const { data: authData, error: authError } =
+  await sb.auth.signInWithPassword({
+    email: u,
+    password: p
+  });
 
-    document.getElementById('superDate').textContent=
-      new Date().toLocaleDateString(
-        'ar-EG',
-        {
-          weekday:'long',
-          year:'numeric',
-          month:'long',
-          day:'numeric'
-        }
-      );
+if(authData?.user){
+  currentUser = {
+    role: 'super',
+    authId: authData.user.id,
+    email: authData.user.email
+  };
 
-    await loadSuperPage();
-    setBtn('loginBtn','دخول',false);
-    return;
-  }
+  document.getElementById('superDate').textContent =
+    new Date().toLocaleDateString(
+      'ar-EG',
+      {
+        weekday:'long',
+        year:'numeric',
+        month:'long',
+        day:'numeric'
+      }
+    );
+
+  await loadSuperPage();
+  setBtn('loginBtn','دخول',false);
+  return;
+}
 
   // Stage Admin Login
   const {data:stg}=await sb
