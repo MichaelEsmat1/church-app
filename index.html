@@ -359,7 +359,6 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
 const SUPABASE_URL='https://tporikleqmekhdriuepn.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwb3Jpa2xlcW1la2hkcml1ZXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NTAyMTMsImV4cCI6MjA5NzAyNjIxM30.u81rZB2d8B0KtbqZ72zGHmsP2Y-63vdSESc4NG05Itw';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const SUPER={user:'malak.romani',pass:'MR@2025#service'};
 const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 const SLOTS=['8ص-12م','12م-4م','4م-8م','8م-12ل'];
 const TRAITS=['قدوة','تعليم','حكمة','تدبير','تواضع','رعاية'];
@@ -387,20 +386,96 @@ async function doLogin(){
   const u=document.getElementById('loginUser').value.trim();
   const p=document.getElementById('loginPass').value;
   const err=document.getElementById('loginError');
-  err.style.display='none';setBtn('loginBtn','جاري الدخول...',true);
-  if(u===SUPER.user&&p===SUPER.pass){
-    currentUser={role:'super'};
-    document.getElementById('superDate').textContent=new Date().toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-    await loadSuperPage();setBtn('loginBtn','دخول',false);return;
-  }
-  const {data:stg}=await sb.from('stages').select('*').eq('username',u).eq('password',p).single();
-  if(stg){currentUser={role:'admin',stageId:stg.id};currentStageId=stg.id;await loadAdminPage(stg);setBtn('loginBtn','دخول',false);return;}
-  const {data:sv}=await sb.from('servants').select('*').eq('username',u).eq('password',p).single();
-  if(sv){currentUser={role:'servant',servantId:sv.id,stageId:sv.stage_id};await loadServantPage(sv);setBtn('loginBtn','دخول',false);return;}
-  err.style.display='block';setBtn('loginBtn','دخول',false);
-}
-function doLogout(){currentUser=null;currentStageId=null;currentStageServants=[];currentAdminReport=null;document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';showPage('loginPage');}
 
+  err.style.display='none';
+  setBtn('loginBtn','جاري الدخول...',true);
+
+  // Super Admin Login
+  const { data: superAdmin } = await sb
+    .from('super_admin')
+    .select('*')
+    .eq('username', u)
+    .eq('password', p)
+    .single();
+  if(superAdmin){
+    currentUser={
+      role:'super',
+      id:superAdmin.id,
+      username:superAdmin.username
+    };
+
+    document.getElementById('superDate').textContent=
+      new Date().toLocaleDateString(
+        'ar-EG',
+        {
+          weekday:'long',
+          year:'numeric',
+          month:'long',
+          day:'numeric'
+        }
+      );
+
+    await loadSuperPage();
+    setBtn('loginBtn','دخول',false);
+    return;
+  }
+
+  // Stage Admin Login
+  const {data:stg}=await sb
+    .from('stages')
+    .select('*')
+    .eq('username',u)
+    .eq('password',p)
+    .single();
+
+  if(stg){
+    currentUser={
+      role:'admin',
+      stageId:stg.id
+    };
+
+    currentStageId=stg.id;
+
+    await loadAdminPage(stg);
+    setBtn('loginBtn','دخول',false);
+    return;
+  }
+
+  // Servant Login
+  const {data:sv}=await sb
+    .from('servants')
+    .select('*')
+    .eq('username',u)
+    .eq('password',p)
+    .single();
+
+  if(sv){
+    currentUser={
+      role:'servant',
+      servantId:sv.id,
+      stageId:sv.stage_id
+    };
+
+    await loadServantPage(sv);
+    setBtn('loginBtn','دخول',false);
+    return;
+  }
+
+  err.style.display='block';
+  setBtn('loginBtn','دخول',false);
+}
+
+function doLogout(){
+  currentUser=null;
+  currentStageId=null;
+  currentStageServants=[];
+  currentAdminReport=null;
+
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+
+  showPage('loginPage');
+}
 // ===== SUPER =====
 async function loadSuperPage(){const {data}=await sb.from('stages').select('*').order('created_at');allStages=data||[];renderSuperStages();showPage('superPage');}
 function switchSuperTab(id){
