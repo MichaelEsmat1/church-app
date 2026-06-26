@@ -809,17 +809,17 @@ function showEditServant(sv){
   document.getElementById('editServantRole').value=sv.role;
   document.getElementById('editServantModal').classList.add('open');
 }
-async function saveEditServant(){
-  const id=document.getElementById('editServantId').value;
-  const name=document.getElementById('editServantName').value.trim();
-  const user=document.getElementById('editServantUser').value.trim();
-  const pass=document.getElementById('editServantPass').value.trim();
-  const role=document.getElementById('editServantRole').value.trim();
-  if(!name||!user||!pass){toast('الرجاء ملء كل الحقول','error');return;}
-  const {error}=await sb.from('servants').update({name,username:user,password:pass,role:role||'خادم'}).eq('id',id);
-  if(error){toast('خطأ في الحفظ','error');return;}
-  closeModals();toast('تم التعديل ✓');await renderAdminServants();
-}
+// async function saveEditServant(){
+//   const id=document.getElementById('editServantId').value;
+//   const name=document.getElementById('editServantName').value.trim();
+//   const user=document.getElementById('editServantUser').value.trim();
+//   const pass=document.getElementById('editServantPass').value.trim();
+//   const role=document.getElementById('editServantRole').value.trim();
+//   if(!name||!user||!pass){toast('الرجاء ملء كل الحقول','error');return;}
+//   const {error}=await sb.from('servants').update({name,username:user,password:pass,role:role||'خادم'}).eq('id',id);
+//   if(error){toast('خطأ في الحفظ','error');return;}
+//   closeModals();toast('تم التعديل ✓');await renderAdminServants();
+// }
 // async function saveNewServant(){
 //   const name=document.getElementById('newServantName').value.trim();
 //   const user=document.getElementById('newServantUser').value.trim();
@@ -831,6 +831,41 @@ async function saveEditServant(){
 //   closeModals();['newServantName','newServantUser','newServantPass','newServantRole'].forEach(i=>document.getElementById(i).value='');
 //   toast('تم إضافة الخادم ✓');await renderAdminServants();
 // }
+
+
+async function saveEditServant(){
+
+  const id=document.getElementById('editServantId').value;
+  const name=document.getElementById('editServantName').value.trim();
+  const user=document.getElementById('editServantUser').value.trim();
+  const role=document.getElementById('editServantRole').value.trim();
+
+  if(!name||!user){
+    toast('الرجاء ملء كل الحقول','error');
+    return;
+  }
+
+  const {error}=await sb
+    .from('servants')
+    .update({
+      name,
+      username:user,
+      role:role||'خادم'
+    })
+    .eq('id',id);
+
+  if(error){
+    toast(error.message,'error');
+    return;
+  }
+
+  closeModals();
+  toast('تم التعديل ✓');
+  await renderAdminServants();
+}
+
+
+
 
 async function saveNewServant() {
 
@@ -891,6 +926,8 @@ async function saveNewServant() {
 
 function askDelete(id){deleteTarget=id;document.getElementById('deleteModal').classList.add('open');}
 async function confirmDelete(){if(!deleteTarget)return;await sb.from('servants').delete().eq('id',deleteTarget);closeModals();deleteTarget=null;toast('تم الحذف');await renderAdminServants();}
+
+
 
 // ===== SERVANT =====
 let currentServantId=null;

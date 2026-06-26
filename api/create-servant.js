@@ -32,34 +32,46 @@ module.exports = async (req, res) => {
         email_confirm: true
       });
 
+console.log("AUTH USER:", authUser);
+console.log("AUTH ERROR:", authError);
     if (authError)
       throw authError;
 
     // Insert servant
-    const { error: dbError } =
-      await supabase
-        .from("servants")
-        .insert({
-          id: "sv_" + Date.now(),
-          stage_id,
-          name,
-          username,
-          auth_user_id: authUser.user.id,
-          role: role || "خادم"
-        });
+const { data: inserted, error: dbError } =
+     await supabase
+    .from("servants")
+    .insert({
+      id: "sv_" + Date.now(),
+      stage_id,
+      name,
+      username,
+      email,
+      auth_user_id: authUser.user.id,
+      role: role || "خادم"
+    })
+    .select();
+console.log("INSERT:", inserted);
+console.log("DB ERROR:", dbError);
 
-    if (dbError)
-      throw dbError;
 
+   if (dbError) {
+  throw dbError;
+}
     return res.status(200).json({
       success: true
     });
 
-  } catch (e) {
-
-    return res.status(500).json({
-      error: e.message
-    });
-
   }
+   catch (e) {
+
+  console.error("========== ERROR ==========");
+  console.error(e);
+
+  return res.status(500).json({
+    error: e.message,
+    details: e
+  });
+
+}
 };
