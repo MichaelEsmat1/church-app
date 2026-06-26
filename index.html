@@ -1477,23 +1477,94 @@ async function saveServantProfile(){
   setTimeout(()=>{btn.textContent='💾 حفظ البيانات الشخصية';btn.style.background='#185FA5';btn.style.borderColor='#185FA5';},2500);
 }
 
-async function changeServantPassword(){
-  const current=document.getElementById('sCurrentPass').value;
-  const newPass=document.getElementById('sNewPass').value;
-  const confirm=document.getElementById('sConfirmPass').value;
-  if(!current||!newPass||!confirm){toast('⚠️ يرجى ملء جميع حقول كلمة المرور','error');return;}
-  if(newPass.length<6){toast('⚠️ كلمة المرور الجديدة 6 أحرف على الأقل','error');return;}
-  if(newPass!==confirm){toast('⚠️ كلمة المرور الجديدة غير متطابقة','error');return;}
-  const {data:sv}=await sb.from('servants').select('password').eq('id',currentServantId).single();
-  if(!sv||sv.password!==current){toast('⚠️ كلمة المرور الحالية غير صحيحة','error');return;}
-  const {error}=await sb.from('servants').update({password:newPass}).eq('id',currentServantId);
-  if(error){toast('حدث خطأ، حاول تاني','error');return;}
-  document.getElementById('sCurrentPass').value='';
-  document.getElementById('sNewPass').value='';
-  document.getElementById('sConfirmPass').value='';
-  toast('✅ تم تغيير كلمة المرور بنجاح');
-}
+// async function changeServantPassword(){
+//   const current=document.getElementById('sCurrentPass').value;
+//   const newPass=document.getElementById('sNewPass').value;
+//   const confirm=document.getElementById('sConfirmPass').value;
+//   if(!current||!newPass||!confirm){toast('⚠️ يرجى ملء جميع حقول كلمة المرور','error');return;}
+//   if(newPass.length<6){toast('⚠️ كلمة المرور الجديدة 6 أحرف على الأقل','error');return;}
+//   if(newPass!==confirm){toast('⚠️ كلمة المرور الجديدة غير متطابقة','error');return;}
+//   const {data:sv}=await sb.from('servants').select('password').eq('id',currentServantId).single();
+//   if(!sv||sv.password!==current){toast('⚠️ كلمة المرور الحالية غير صحيحة','error');return;}
+//   const {error}=await sb.from('servants').update({password:newPass}).eq('id',currentServantId);
+//   if(error){toast('حدث خطأ، حاول تاني','error');return;}
+//   document.getElementById('sCurrentPass').value='';
+//   document.getElementById('sNewPass').value='';
+//   document.getElementById('sConfirmPass').value='';
+//   toast('✅ تم تغيير كلمة المرور بنجاح');
+// }
+async function changeServantPassword() {
 
+  const current = document.getElementById('sCurrentPass').value.trim();
+  const newPass = document.getElementById('sNewPass').value.trim();
+  const confirm = document.getElementById('sConfirmPass').value.trim();
+
+  if (!current || !newPass || !confirm) {
+    toast('⚠️ يرجى ملء جميع الحقول', 'error');
+    return;
+  }
+
+  if (newPass.length < 6) {
+    toast('⚠️ كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل', 'error');
+    return;
+  }
+
+  if (newPass !== confirm) {
+    toast('⚠️ كلمة المرور الجديدة غير متطابقة', 'error');
+    return;
+  }
+
+  try {
+
+    // المستخدم لازم يكون مسجل دخول بالفعل
+    const {
+      data: { user }
+    } = await sb.auth.getUser();
+
+    if (!user) {
+      toast('انتهت الجلسة، سجل الدخول مرة أخرى', 'error');
+      return;
+    }
+
+    // نتأكد من كلمة المرور الحالية بإعادة تسجيل الدخول
+    const {
+      error: loginError
+    } = await sb.auth.signInWithPassword({
+      email: user.email,
+      password: current
+    });
+
+    if (loginError) {
+      toast('⚠️ كلمة المرور الحالية غير صحيحة', 'error');
+      return;
+    }
+
+    // تغيير كلمة المرور داخل Supabase Auth
+    const {
+      error: updateError
+    } = await sb.auth.updateUser({
+      password: newPass
+    });
+
+    if (updateError) {
+      toast(updateError.message, 'error');
+      return;
+    }
+
+    document.getElementById('sCurrentPass').value = '';
+    document.getElementById('sNewPass').value = '';
+    document.getElementById('sConfirmPass').value = '';
+
+    toast('✅ تم تغيير كلمة المرور بنجاح');
+
+  } catch (err) {
+
+    console.error(err);
+    toast('حدث خطأ، حاول مرة أخرى', 'error');
+
+  }
+
+}
 async function saveServantSurvey(){
   const positives=document.getElementById('sPositives').value.trim();
   const negatives=document.getElementById('sNegatives').value.trim();
