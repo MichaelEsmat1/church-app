@@ -382,158 +382,315 @@ function toggleCheck(el){const cb=el.querySelector('input[type=checkbox]');cb.ch
 function setBtn(id,txt,dis=false){const b=document.getElementById(id);if(b){b.textContent=txt;b.disabled=dis;}}
 
 // ===== LOGIN =====
-async function doLogin(){
-  const u=document.getElementById('loginUser').value.trim();
-  const p=document.getElementById('loginPass').value;
-  const err=document.getElementById('loginError');
+// async function doLogin(){
+//   const u=document.getElementById('loginUser').value.trim();
+//   const p=document.getElementById('loginPass').value;
+//   const err=document.getElementById('loginError');
 
-  err.style.display='none';
-  setBtn('loginBtn','جاري الدخول...',true);
-if(u.includes('@')){
+//   err.style.display='none';
+//   setBtn('loginBtn','جاري الدخول...',true);
+// if(u.includes('@')){
 
- const { data: authData, error: authError } =
-  await sb.auth.signInWithPassword({
-    email: u,
-    password: p
-  });
+//  const { data: authData, error: authError } =
+//   await sb.auth.signInWithPassword({
+//     email: u,
+//     password: p
+//   });
 
-if(authData?.user){
-  currentUser = {
-    role: 'super',
-    authId: authData.user.id,
-    email: authData.user.email
-  };
+// if(authData?.user){
+//   currentUser = {
+//     role: 'super',
+//     authId: authData.user.id,
+//     email: authData.user.email
+//   };
 
-  document.getElementById('superDate').textContent =
-    new Date().toLocaleDateString(
-      'ar-EG',
-      {
-        weekday:'long',
-        year:'numeric',
-        month:'long',
-        day:'numeric'
-      }
-    );
+//   document.getElementById('superDate').textContent =
+//     new Date().toLocaleDateString(
+//       'ar-EG',
+//       {
+//         weekday:'long',
+//         year:'numeric',
+//         month:'long',
+//         day:'numeric'
+//       }
+//     );
 
-  await loadSuperPage();
-  setBtn('loginBtn','دخول',false);
-  return;
-}
+//   await loadSuperPage();
+//   setBtn('loginBtn','دخول',false);
+//   return;
+// }
 
-}
-
-
+// }
 
 
 
 
 
-// Admin Auth Login (Pilot Test)
-const {
-  data: adminAuthData,
-  error: adminAuthError
-} = await sb.auth.signInWithPassword({
-  email: `${u}@church.local`,
-  password: p
-});
 
 
-if(adminAuthData?.user){
-
-  const { data: stg} = await sb
-    .from('stages')
-    .select('*')
-    .eq('auth_user_id', adminAuthData.user.id)
-    // .single();
-      .maybeSingle();
-
-
-
-  if(stg){
-    currentUser={
-      role:'admin',
-      stageId:stg.id
-    };
-
-    currentStageId=stg.id;
-
-    await loadAdminPage(stg);
-    setBtn('loginBtn','دخول',false);
-    return;
-  }
-}
-
-  // Servant Login
-  // const {data:sv}=await sb
-  //   .from('servants')
-  //   .select('*')
-  //   .eq('username',u)
-  //   .eq('password',p)
-  //   .single();
-
-  // if(sv){
-  //   currentUser={
-  //     role:'servant',
-  //     servantId:sv.id,
-  //     stageId:sv.stage_id
-  //   };
-
-  //   await loadServantPage(sv);
-  //   setBtn('loginBtn','دخول',false);
-  //   return;
-  // }
-  // Servant Auth Login
+// // Admin Auth Login (Pilot Test)
 // const {
-//   data: servantAuthData,
-//   error: servantAuthError
+//   data: adminAuthData,
+//   error: adminAuthError
 // } = await sb.auth.signInWithPassword({
 //   email: `${u}@church.local`,
 //   password: p
 // });
-const loginEmail = `${u}@church.local`;
 
-console.log("========== SERVANT LOGIN ==========");
-console.log("Trying Email:", loginEmail);
-console.log("Password:", p);
 
-const {
-  data: servantAuthData,
-  error: servantAuthError
-} = await sb.auth.signInWithPassword({
-  email: loginEmail,
-  password: p
-});
+// if(adminAuthData?.user){
 
-console.log("Login Data:", servantAuthData);
-console.log("Login Error:", servantAuthError);
-console.log("==================================");
-if (servantAuthData?.user) {
+//   const { data: stg} = await sb
+//     .from('stages')
+//     .select('*')
+//     .eq('auth_user_id', adminAuthData.user.id)
+//     // .single();
+//       .maybeSingle();
 
-  const { data: sv, error: svError } = await sb
-    .from('servants')
-    .select('*')
-    .eq('auth_user_id', servantAuthData.user.id)
-    // .single();
-    .maybeSingle();
 
-  if (sv) {
 
-    currentUser = {
-      role: 'servant',
-      servantId: sv.id,
-      stageId: sv.stage_id
-    };
+//   if(stg){
+//     currentUser={
+//       role:'admin',
+//       stageId:stg.id
+//     };
 
-    await loadServantPage(sv);
-    setBtn('loginBtn', 'دخول', false);
-    return;
+//     currentStageId=stg.id;
+
+//     await loadAdminPage(stg);
+//     setBtn('loginBtn','دخول',false);
+//     return;
+//   }
+// }
+
+  
+// const loginEmail = `${u}@church.local`;
+
+// console.log("========== SERVANT LOGIN ==========");
+// console.log("Trying Email:", loginEmail);
+// console.log("Password:", p);
+
+// const {
+//   data: servantAuthData,
+//   error: servantAuthError
+// } = await sb.auth.signInWithPassword({
+//   email: loginEmail,
+//   password: p
+// });
+
+// console.log("Login Data:", servantAuthData);
+// console.log("Login Error:", servantAuthError);
+// console.log("==================================");
+// if (servantAuthData?.user) {
+
+//   const { data: sv, error: svError } = await sb
+//     .from('servants')
+//     .select('*')
+//     .eq('auth_user_id', servantAuthData.user.id)
+//     // .single();
+//     .maybeSingle();
+
+//   if (sv) {
+
+//     currentUser = {
+//       role: 'servant',
+//       servantId: sv.id,
+//       stageId: sv.stage_id
+//     };
+
+//     await loadServantPage(sv);
+//     setBtn('loginBtn', 'دخول', false);
+//     return;
+//   }
+// }
+
+//   err.style.display='block';
+//   setBtn('loginBtn','دخول',false);
+// }
+
+
+
+// ===== LOGIN =====
+async function doLogin() {
+
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginError');
+
+  err.style.display = 'none';
+  setBtn('loginBtn', 'جاري الدخول...', true);
+
+  console.clear();
+  console.log("========== LOGIN START ==========");
+  console.log("Username:", u);
+  console.log("Password:", p);
+
+  // ===========================
+  // SUPER ADMIN LOGIN
+  // ===========================
+
+  if (u.includes('@')) {
+
+    console.log("Trying Super Admin Login...");
+
+    const {
+      data: authData,
+      error: authError
+    } = await sb.auth.signInWithPassword({
+      email: u,
+      password: p
+    });
+
+    console.log("Super Admin Data:", authData);
+    console.log("Super Admin Error:", authError);
+
+    if (authData?.user) {
+
+      console.log("✅ Super Admin Login Success");
+
+      currentUser = {
+        role: 'super',
+        authId: authData.user.id,
+        email: authData.user.email
+      };
+
+      document.getElementById('superDate').textContent =
+        new Date().toLocaleDateString('ar-EG', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+
+      await loadSuperPage();
+
+      setBtn('loginBtn', 'دخول', false);
+
+      return;
+    }
+
   }
-}
 
-  err.style.display='block';
-  setBtn('loginBtn','دخول',false);
-}
+  // ===========================
+  // ADMIN LOGIN
+  // ===========================
 
+  const adminEmail = `${u}@church.local`;
+
+  console.log("Trying Admin Login...");
+  console.log("Admin Email:", adminEmail);
+
+  const {
+    data: adminAuthData,
+    error: adminAuthError
+  } = await sb.auth.signInWithPassword({
+    email: adminEmail,
+    password: p
+  });
+
+  console.log("Admin Data:", adminAuthData);
+  console.log("Admin Error:", adminAuthError);
+
+  if (adminAuthData?.user) {
+
+    console.log("✅ Admin Auth Success");
+
+    const {
+      data: stg,
+      error: stageError
+    } = await sb
+      .from('stages')
+      .select('*')
+      .eq('auth_user_id', adminAuthData.user.id)
+      .maybeSingle();
+
+    console.log("Stage:", stg);
+    console.log("Stage Error:", stageError);
+
+    if (stg) {
+
+      console.log("✅ Stage Found");
+
+      currentUser = {
+        role: 'admin',
+        stageId: stg.id
+      };
+
+      currentStageId = stg.id;
+
+      await loadAdminPage(stg);
+
+      setBtn('loginBtn', 'دخول', false);
+
+      return;
+    }
+
+  }
+
+  // ===========================
+  // SERVANT LOGIN
+  // ===========================
+
+  const servantEmail = `${u}@church.local`;
+
+  console.log("Trying Servant Login...");
+  console.log("Servant Email:", servantEmail);
+
+  const {
+    data: servantAuthData,
+    error: servantAuthError
+  } = await sb.auth.signInWithPassword({
+    email: servantEmail,
+    password: p
+  });
+
+  console.log("Servant Data:", servantAuthData);
+  console.log("Servant Error:", servantAuthError);
+
+  if (servantAuthData?.user) {
+
+    console.log("✅ Servant Auth Success");
+    console.log("User ID:", servantAuthData.user.id);
+
+    const {
+      data: sv,
+      error: svError
+    } = await sb
+      .from('servants')
+      .select('*')
+      .eq('auth_user_id', servantAuthData.user.id)
+      .maybeSingle();
+
+    console.log("Servant Record:", sv);
+    console.log("Servant DB Error:", svError);
+
+    if (sv) {
+
+      console.log("✅ Servant Login Completed");
+
+      currentUser = {
+        role: 'servant',
+        servantId: sv.id,
+        stageId: sv.stage_id
+      };
+
+      await loadServantPage(sv);
+
+      setBtn('loginBtn', 'دخول', false);
+
+      return;
+    }
+
+    console.log("❌ Auth succeeded but servant record not found");
+
+  }
+
+  console.log("❌ LOGIN FAILED");
+
+  err.style.display = 'block';
+  setBtn('loginBtn', 'دخول', false);
+
+}
 function doLogout(){
   currentUser=null;
   currentStageId=null;
