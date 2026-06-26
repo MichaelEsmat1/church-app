@@ -805,7 +805,8 @@ function showEditServant(sv){
   document.getElementById('editServantId').value=sv.id;
   document.getElementById('editServantName').value=sv.name;
   document.getElementById('editServantUser').value=sv.username;
-  document.getElementById('editServantPass').value=sv.password;
+  // document.getElementById('editServantPass').value='';
+  document.getElementById('editServantPass').placeholder = 'اتركه فارغًا إذا لم ترد تغييره';
   document.getElementById('editServantRole').value=sv.role;
   document.getElementById('editServantModal').classList.add('open');
 }
