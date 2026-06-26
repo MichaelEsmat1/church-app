@@ -432,11 +432,12 @@ const {
 
 if(adminAuthData?.user){
 
-  const { data: stg, error: stgError } = await sb
+  const { data: stg} = await sb
     .from('stages')
     .select('*')
     .eq('auth_user_id', adminAuthData.user.id)
-    .single();
+    // .single();
+      .maybeSingle();
 
 
 
@@ -455,24 +456,55 @@ if(adminAuthData?.user){
 }
 
   // Servant Login
-  const {data:sv}=await sb
+  // const {data:sv}=await sb
+  //   .from('servants')
+  //   .select('*')
+  //   .eq('username',u)
+  //   .eq('password',p)
+  //   .single();
+
+  // if(sv){
+  //   currentUser={
+  //     role:'servant',
+  //     servantId:sv.id,
+  //     stageId:sv.stage_id
+  //   };
+
+  //   await loadServantPage(sv);
+  //   setBtn('loginBtn','دخول',false);
+  //   return;
+  // }
+  // Servant Auth Login
+const {
+  data: servantAuthData,
+  error: servantAuthError
+} = await sb.auth.signInWithPassword({
+  email: `${u}@church.local`,
+  password: p
+});
+
+if (servantAuthData?.user) {
+
+  const { data: sv, error: svError } = await sb
     .from('servants')
     .select('*')
-    .eq('username',u)
-    .eq('password',p)
-    .single();
+    .eq('auth_user_id', servantAuthData.user.id)
+    // .single();
+    .maybeSingle();
 
-  if(sv){
-    currentUser={
-      role:'servant',
-      servantId:sv.id,
-      stageId:sv.stage_id
+  if (sv) {
+
+    currentUser = {
+      role: 'servant',
+      servantId: sv.id,
+      stageId: sv.stage_id
     };
 
     await loadServantPage(sv);
-    setBtn('loginBtn','دخول',false);
+    setBtn('loginBtn', 'دخول', false);
     return;
   }
+}
 
   err.style.display='block';
   setBtn('loginBtn','دخول',false);
@@ -504,7 +536,13 @@ async function addStage(){
   const aUser=document.getElementById('newAdminUser').value.trim();
   const aPass=document.getElementById('newAdminPass').value.trim();
   if(!name||!aUser||!aPass){toast('⚠️ جميع الحقول مطلوبة','error');return;}
-  const {error}=await sb.from('stages').insert({id:'stage_'+Date.now(),name,admin_name:aName||aUser,username:aUser,password:aPass});
+  // const {error}=await sb.from('stages').insert({id:'stage_'+Date.now(),name,admin_name:aName||aUser,username:aUser,password:aPass});
+  const {error}=await sb.from('stages').insert({
+  id:'stage_'+Date.now(),
+  name,
+  admin_name:aName||aUser,
+  username:aUser
+});
   if(error){toast('خطأ: اسم المستخدم موجود بالفعل','error');return;}
   ['newStageName','newAdminName','newAdminUser','newAdminPass'].forEach(i=>document.getElementById(i).value='');
   toast('تم إضافة المرحلة ✓');await loadSuperPage();
@@ -687,7 +725,7 @@ async function renderSuperStagesSurveys(){
   el.innerHTML=html;
 }
 async function loadAdminReportForm(){
-  const {data:r}=await sb.from('admin_reports').select('*').eq('stage_id',currentStageId).single();
+  const {data:r}=await sb.from('admin_reports').select('*').eq('stage_id',currentStageId).maybeSingle();
   currentAdminReport=r||null;
   document.getElementById('rServiceName').value=r?.service_name||'';
   document.getElementById('rPositives').value=r?.positives||'';
@@ -792,7 +830,12 @@ async function confirmDelete(){if(!deleteTarget)return;await sb.from('servants')
 let currentServantId=null;
 async function loadServantPage(sv){
   currentServantId=sv.id;
-  const {data:stage}=await sb.from('stages').select('name').eq('id',sv.stage_id).single();
+  const { data: stage } = await sb
+    .from('stages')
+    .select('name')
+    .eq('id', sv.stage_id)
+    .single();
+
   const {data:stageServants}=await sb.from('servants').select('id,name').eq('stage_id',sv.stage_id).order('name');
   const othersInStage=(stageServants||[]).filter(s=>s.id!==sv.id);
   document.getElementById('servantPageName').textContent='أهلاً، '+sv.name;
@@ -803,7 +846,9 @@ async function loadServantPage(sv){
   else{avatarEl.textContent='👤';}
   // mobile
   document.getElementById('sMobile').value=sv.mobile||'';
-  const {data:existing}=await sb.from('surveys').select('*').eq('servant_id',sv.id).single();
+  // const {data:existing}=await sb.from('surveys').select('*').eq('servant_id',sv.id).single();
+    const {data:existing}=await sb.from('surveys').select('*').eq('servant_id',sv.id).maybeSingle();
+
   document.getElementById('sPositives').value=existing?.positives||'';
   document.getElementById('sNegatives').value=existing?.negatives||'';
   suitableSlots=existing?.suitable_slots||[];
