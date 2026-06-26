@@ -483,14 +483,27 @@ if(adminAuthData?.user){
   //   return;
   // }
   // Servant Auth Login
+// const {
+//   data: servantAuthData,
+//   error: servantAuthError
+// } = await sb.auth.signInWithPassword({
+//   email: `${u}@church.local`,
+//   password: p
+// });
+const loginEmail = `${u}@church.local`;
+
+console.log("Trying login with:", loginEmail);
+
 const {
   data: servantAuthData,
   error: servantAuthError
 } = await sb.auth.signInWithPassword({
-  email: `${u}@church.local`,
+  email: loginEmail,
   password: p
 });
 
+console.log("Servant Login Result:", servantAuthData);
+console.log("Servant Login Error:", servantAuthError);
 if (servantAuthData?.user) {
 
   const { data: sv, error: svError } = await sb
