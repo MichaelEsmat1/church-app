@@ -321,8 +321,6 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
     <input type="text" id="editServantName"/>
     <label>اسم المستخدم</label>
     <input type="text" id="editServantUser"/>
-    <label>كلمة المرور</label>
-    <input type="text" id="editServantPass"/>
     <label>الدور / المهمة</label>
     <input type="text" id="editServantRole"/>
     <div class="modal-btns">
@@ -980,13 +978,9 @@ function showEditServant(sv){
   document.getElementById('editServantId').value=sv.id;
   document.getElementById('editServantName').value=sv.name;
   document.getElementById('editServantUser').value=sv.username;
-  // document.getElementById('editServantPass').value='';
-  document.getElementById('editServantPass').placeholder = 'اتركه فارغًا إذا لم ترد تغييره';
-  document.getElementById('editServantRole').value=sv.role;
+  document.getElementById("editServantRole").value = sv.role || "خادم";
   document.getElementById('editServantModal').classList.add('open');
 }
-
-
 
 // async function saveEditServant() {
 
@@ -1001,7 +995,8 @@ function showEditServant(sv){
 //     id,
 //     name,
 //     user,
-//     role
+//     role,
+//     hasPassword: !!pass
 //   });
 
 //   if (!name || !user) {
@@ -1014,7 +1009,7 @@ function showEditServant(sv){
 
 //   console.log("Old Servant:", oldServant);
 
-//   // لو اسم المستخدم اتغير
+//   // تغيير اليوزر نيم والإيميل في Auth
 //   if (oldServant && oldServant.username !== user) {
 
 //     console.log("🔄 Username changed");
@@ -1031,11 +1026,9 @@ function showEditServant(sv){
 //       })
 //     });
 
-//     console.log("Response Status:", response.status);
-
 //     const result = await response.json();
 
-//     console.log("API Response:", result);
+//     console.log("Username API:", result);
 
 //     if (!response.ok) {
 //       toast(result.error || 'Update API Error', 'error');
@@ -1043,8 +1036,19 @@ function showEditServant(sv){
 //     }
 
 //     console.log("✅ Auth Email Updated");
-//   } else {
-//     console.log("Username didn't change");
+//   }
+
+
+//     const result = await response.json();
+
+//     console.log("Password API:", result);
+
+//     if (!response.ok) {
+//       toast(result.error || 'Password Update Error', 'error');
+//       return;
+//     }
+
+//     console.log("✅ Auth Password Updated");
 //   }
 
 //   console.log("Updating servants table...");
@@ -1073,9 +1077,6 @@ function showEditServant(sv){
 //   await renderAdminServants();
 
 //   console.log("========== SAVE EDIT END ==========");
-// }
-
-
 async function saveEditServant() {
 
   console.log("========== SAVE EDIT START ==========");
@@ -1083,15 +1084,13 @@ async function saveEditServant() {
   const id = document.getElementById('editServantId').value;
   const name = document.getElementById('editServantName').value.trim();
   const user = document.getElementById('editServantUser').value.trim();
-  const pass = document.getElementById('editServantPass').value.trim();
   const role = document.getElementById('editServantRole').value.trim();
 
   console.log("Form Data:", {
     id,
     name,
     user,
-    role,
-    hasPassword: !!pass
+    role
   });
 
   if (!name || !user) {
@@ -1104,7 +1103,7 @@ async function saveEditServant() {
 
   console.log("Old Servant:", oldServant);
 
-  // تغيير اليوزر نيم والإيميل في Auth
+  // لو اسم المستخدم اتغير نحدث Auth Email
   if (oldServant && oldServant.username !== user) {
 
     console.log("🔄 Username changed");
@@ -1133,34 +1132,6 @@ async function saveEditServant() {
     console.log("✅ Auth Email Updated");
   }
 
-  // تغيير الباسورد في Auth لو الأدمن كتب باسورد جديد
-  if (pass) {
-
-    console.log("🔑 Updating Auth Password...");
-
-    const response = await fetch('/api/update-servant-password', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        id,
-        password: pass
-      })
-    });
-
-    const result = await response.json();
-
-    console.log("Password API:", result);
-
-    if (!response.ok) {
-      toast(result.error || 'Password Update Error', 'error');
-      return;
-    }
-
-    console.log("✅ Auth Password Updated");
-  }
-
   console.log("Updating servants table...");
 
   const { error } = await sb
@@ -1184,6 +1155,7 @@ async function saveEditServant() {
 
   closeModals();
   toast('تم التعديل ✓');
+
   await renderAdminServants();
 
   console.log("========== SAVE EDIT END ==========");
@@ -1246,9 +1218,53 @@ async function saveNewServant() {
 }
 
 function askDelete(id){deleteTarget=id;document.getElementById('deleteModal').classList.add('open');}
-async function confirmDelete(){if(!deleteTarget)return;await sb.from('servants').delete().eq('id',deleteTarget);closeModals();deleteTarget=null;toast('تم الحذف');await renderAdminServants();}
+// async function confirmDelete()
+// {if(!deleteTarget)return;await sb.from('servants').delete().eq('id',deleteTarget);closeModals();deleteTarget=null;toast('تم الحذف');await renderAdminServants();}
 
+async function confirmDelete(){
 
+  if(!deleteTarget) return;
+
+  try{
+
+    const response = await fetch('/api/delete-servant',{
+
+      method:'POST',
+
+      headers:{
+        'Content-Type':'application/json'
+      },
+
+      body:JSON.stringify({
+        id:deleteTarget
+      })
+
+    });
+
+    const result = await response.json();
+
+    if(!response.ok){
+      toast(result.error,'error');
+      return;
+    }
+
+    closeModals();
+
+    deleteTarget = null;
+
+    toast('تم حذف الخادم ✓');
+
+    await renderAdminServants();
+
+  }catch(err){
+
+    console.error(err);
+
+    toast('حدث خطأ أثناء الحذف','error');
+
+  }
+
+}
 
 // ===== SERVANT =====
 let currentServantId=null;
