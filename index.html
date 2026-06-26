@@ -988,78 +988,37 @@ function showEditServant(sv){
 
 
 
-// async function saveEditServant(){
-//   const id=document.getElementById('editServantId').value;
-//   const name=document.getElementById('editServantName').value.trim();
-//   const user=document.getElementById('editServantUser').value.trim();
-//   const pass=document.getElementById('editServantPass').value.trim();
-//   const role=document.getElementById('editServantRole').value.trim();
-//   if(!name||!user||!pass){toast('الرجاء ملء كل الحقول','error');return;}
-//   const {error}=await sb.from('servants').update({name,username:user,password:pass,role:role||'خادم'}).eq('id',id);
-//   if(error){toast('خطأ في الحفظ','error');return;}
-//   closeModals();toast('تم التعديل ✓');await renderAdminServants();
-// }
-// async function saveNewServant(){
-//   const name=document.getElementById('newServantName').value.trim();
-//   const user=document.getElementById('newServantUser').value.trim();
-//   const pass=document.getElementById('newServantPass').value.trim();
-//   const role=document.getElementById('newServantRole').value.trim();
-//   if(!name||!user||!pass){toast('⚠️ الاسم واسم المستخدم وكلمة المرور مطلوبة','error');return;}
-//   const {error}=await sb.from('servants').insert({id:'sv_'+Date.now(),stage_id:currentStageId,name,username:user,password:pass,role:role||'خادم'});
-//   if(error){toast('خطأ: اسم المستخدم موجود بالفعل','error');return;}
-//   closeModals();['newServantName','newServantUser','newServantPass','newServantRole'].forEach(i=>document.getElementById(i).value='');
-//   toast('تم إضافة الخادم ✓');await renderAdminServants();
-// }
-
-
-// async function saveEditServant(){
-
-//   const id=document.getElementById('editServantId').value;
-//   const name=document.getElementById('editServantName').value.trim();
-//   const user=document.getElementById('editServantUser').value.trim();
-//   const role=document.getElementById('editServantRole').value.trim();
-
-//   if(!name||!user){
-//     toast('الرجاء ملء كل الحقول','error');
-//     return;
-//   }
-
-//   const {error}=await sb
-//     .from('servants')
-//     .update({
-//       name,
-//       username:user,
-//       role:role||'خادم'
-//     })
-//     .eq('id',id);
-
-//   if(error){
-//     toast(error.message,'error');
-//     return;
-//   }
-
-//   closeModals();
-//   toast('تم التعديل ✓');
-//   await renderAdminServants();
-// }
 // async function saveEditServant() {
+
+//   console.log("========== SAVE EDIT START ==========");
 
 //   const id = document.getElementById('editServantId').value;
 //   const name = document.getElementById('editServantName').value.trim();
 //   const user = document.getElementById('editServantUser').value.trim();
 //   const role = document.getElementById('editServantRole').value.trim();
- 
+
+//   console.log("Form Data:", {
+//     id,
+//     name,
+//     user,
+//     role
+//   });
+
 //   if (!name || !user) {
+//     console.log("❌ Validation Failed");
 //     toast('الرجاء ملء كل الحقول', 'error');
 //     return;
 //   }
 
-
 //   const oldServant = currentStageServants.find(s => s.id === id);
 
+//   console.log("Old Servant:", oldServant);
 
-//   // لو اليوزر اتغير هنحتاج API تحدث الـ Auth
-//   if (oldServant.username !== user) {
+//   // لو اسم المستخدم اتغير
+//   if (oldServant && oldServant.username !== user) {
+
+//     console.log("🔄 Username changed");
+//     console.log("Calling /api/update-servant...");
 
 //     const response = await fetch('/api/update-servant', {
 //       method: 'POST',
@@ -1072,13 +1031,23 @@ function showEditServant(sv){
 //       })
 //     });
 
+//     console.log("Response Status:", response.status);
+
 //     const result = await response.json();
 
+//     console.log("API Response:", result);
+
 //     if (!response.ok) {
-//       toast(result.error, 'error');
+//       toast(result.error || 'Update API Error', 'error');
 //       return;
 //     }
+
+//     console.log("✅ Auth Email Updated");
+//   } else {
+//     console.log("Username didn't change");
 //   }
+
+//   console.log("Updating servants table...");
 
 //   const { error } = await sb
 //     .from('servants')
@@ -1090,15 +1059,20 @@ function showEditServant(sv){
 //     })
 //     .eq('id', id);
 
+//   console.log("Supabase Update Error:", error);
 
 //   if (error) {
 //     toast(error.message, 'error');
 //     return;
 //   }
 
+//   console.log("✅ Database Updated Successfully");
+
 //   closeModals();
 //   toast('تم التعديل ✓');
 //   await renderAdminServants();
+
+//   console.log("========== SAVE EDIT END ==========");
 // }
 
 
@@ -1109,13 +1083,15 @@ async function saveEditServant() {
   const id = document.getElementById('editServantId').value;
   const name = document.getElementById('editServantName').value.trim();
   const user = document.getElementById('editServantUser').value.trim();
+  const pass = document.getElementById('editServantPass').value.trim();
   const role = document.getElementById('editServantRole').value.trim();
 
   console.log("Form Data:", {
     id,
     name,
     user,
-    role
+    role,
+    hasPassword: !!pass
   });
 
   if (!name || !user) {
@@ -1128,7 +1104,7 @@ async function saveEditServant() {
 
   console.log("Old Servant:", oldServant);
 
-  // لو اسم المستخدم اتغير
+  // تغيير اليوزر نيم والإيميل في Auth
   if (oldServant && oldServant.username !== user) {
 
     console.log("🔄 Username changed");
@@ -1145,11 +1121,9 @@ async function saveEditServant() {
       })
     });
 
-    console.log("Response Status:", response.status);
-
     const result = await response.json();
 
-    console.log("API Response:", result);
+    console.log("Username API:", result);
 
     if (!response.ok) {
       toast(result.error || 'Update API Error', 'error');
@@ -1157,8 +1131,34 @@ async function saveEditServant() {
     }
 
     console.log("✅ Auth Email Updated");
-  } else {
-    console.log("Username didn't change");
+  }
+
+  // تغيير الباسورد في Auth لو الأدمن كتب باسورد جديد
+  if (pass) {
+
+    console.log("🔑 Updating Auth Password...");
+
+    const response = await fetch('/api/update-servant-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id,
+        password: pass
+      })
+    });
+
+    const result = await response.json();
+
+    console.log("Password API:", result);
+
+    if (!response.ok) {
+      toast(result.error || 'Password Update Error', 'error');
+      return;
+    }
+
+    console.log("✅ Auth Password Updated");
   }
 
   console.log("Updating servants table...");
@@ -1188,7 +1188,6 @@ async function saveEditServant() {
 
   console.log("========== SAVE EDIT END ==========");
 }
-
 async function saveNewServant() {
 
   const name = document.getElementById('newServantName').value.trim();
