@@ -420,11 +420,8 @@ if(authData?.user){
   return;
 }
 
-  await loadSuperPage();
-  setBtn('loginBtn','دخول',false);
-  return;
 }
-}
+
 
 
 
@@ -519,7 +516,7 @@ if (servantAuthData?.user) {
 
   err.style.display='block';
   setBtn('loginBtn','دخول',false);
-
+}
 
 function doLogout(){
   currentUser=null;
