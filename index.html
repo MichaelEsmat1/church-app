@@ -492,7 +492,9 @@ if(adminAuthData?.user){
 // });
 const loginEmail = `${u}@church.local`;
 
-console.log("Trying login with:", loginEmail);
+console.log("========== SERVANT LOGIN ==========");
+console.log("Trying Email:", loginEmail);
+console.log("Password:", p);
 
 const {
   data: servantAuthData,
@@ -502,8 +504,9 @@ const {
   password: p
 });
 
-console.log("Servant Login Result:", servantAuthData);
-console.log("Servant Login Error:", servantAuthError);
+console.log("Login Data:", servantAuthData);
+console.log("Login Error:", servantAuthError);
+console.log("==================================");
 if (servantAuthData?.user) {
 
   const { data: sv, error: svError } = await sb
