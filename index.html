@@ -379,134 +379,6 @@ function closeModals(){document.querySelectorAll('.modal-bg').forEach(m=>m.class
 function toggleCheck(el){const cb=el.querySelector('input[type=checkbox]');cb.checked=!cb.checked;el.classList.toggle('checked',cb.checked);}
 function setBtn(id,txt,dis=false){const b=document.getElementById(id);if(b){b.textContent=txt;b.disabled=dis;}}
 
-// ===== LOGIN =====
-// async function doLogin(){
-//   const u=document.getElementById('loginUser').value.trim();
-//   const p=document.getElementById('loginPass').value;
-//   const err=document.getElementById('loginError');
-
-//   err.style.display='none';
-//   setBtn('loginBtn','جاري الدخول...',true);
-// if(u.includes('@')){
-
-//  const { data: authData, error: authError } =
-//   await sb.auth.signInWithPassword({
-//     email: u,
-//     password: p
-//   });
-
-// if(authData?.user){
-//   currentUser = {
-//     role: 'super',
-//     authId: authData.user.id,
-//     email: authData.user.email
-//   };
-
-//   document.getElementById('superDate').textContent =
-//     new Date().toLocaleDateString(
-//       'ar-EG',
-//       {
-//         weekday:'long',
-//         year:'numeric',
-//         month:'long',
-//         day:'numeric'
-//       }
-//     );
-
-//   await loadSuperPage();
-//   setBtn('loginBtn','دخول',false);
-//   return;
-// }
-
-// }
-
-
-
-
-
-
-
-// // Admin Auth Login (Pilot Test)
-// const {
-//   data: adminAuthData,
-//   error: adminAuthError
-// } = await sb.auth.signInWithPassword({
-//   email: `${u}@church.local`,
-//   password: p
-// });
-
-
-// if(adminAuthData?.user){
-
-//   const { data: stg} = await sb
-//     .from('stages')
-//     .select('*')
-//     .eq('auth_user_id', adminAuthData.user.id)
-//     // .single();
-//       .maybeSingle();
-
-
-
-//   if(stg){
-//     currentUser={
-//       role:'admin',
-//       stageId:stg.id
-//     };
-
-//     currentStageId=stg.id;
-
-//     await loadAdminPage(stg);
-//     setBtn('loginBtn','دخول',false);
-//     return;
-//   }
-// }
-
-  
-// const loginEmail = `${u}@church.local`;
-
-// console.log("========== SERVANT LOGIN ==========");
-// console.log("Trying Email:", loginEmail);
-// console.log("Password:", p);
-
-// const {
-//   data: servantAuthData,
-//   error: servantAuthError
-// } = await sb.auth.signInWithPassword({
-//   email: loginEmail,
-//   password: p
-// });
-
-// console.log("Login Data:", servantAuthData);
-// console.log("Login Error:", servantAuthError);
-// console.log("==================================");
-// if (servantAuthData?.user) {
-
-//   const { data: sv, error: svError } = await sb
-//     .from('servants')
-//     .select('*')
-//     .eq('auth_user_id', servantAuthData.user.id)
-//     // .single();
-//     .maybeSingle();
-
-//   if (sv) {
-
-//     currentUser = {
-//       role: 'servant',
-//       servantId: sv.id,
-//       stageId: sv.stage_id
-//     };
-
-//     await loadServantPage(sv);
-//     setBtn('loginBtn', 'دخول', false);
-//     return;
-//   }
-// }
-
-//   err.style.display='block';
-//   setBtn('loginBtn','دخول',false);
-// }
-
-
 
 // ===== LOGIN =====
 async function doLogin() {
@@ -518,18 +390,13 @@ async function doLogin() {
   err.style.display = 'none';
   setBtn('loginBtn', 'جاري الدخول...', true);
 
-  console.clear();
-  console.log("========== LOGIN START ==========");
-  console.log("Username:", u);
-  console.log("Password:", p);
+ 
 
   // ===========================
   // SUPER ADMIN LOGIN
   // ===========================
 
   if (u.includes('@')) {
-
-    console.log("Trying Super Admin Login...");
 
     const {
       data: authData,
@@ -539,12 +406,9 @@ async function doLogin() {
       password: p
     });
 
-    console.log("Super Admin Data:", authData);
-    console.log("Super Admin Error:", authError);
-
+    
     if (authData?.user) {
 
-      console.log("✅ Super Admin Login Success");
 
       currentUser = {
         role: 'super',
@@ -575,8 +439,7 @@ async function doLogin() {
 
   const adminEmail = `${u}@church.local`;
 
-  console.log("Trying Admin Login...");
-  console.log("Admin Email:", adminEmail);
+  
 
   const {
     data: adminAuthData,
@@ -586,8 +449,7 @@ async function doLogin() {
     password: p
   });
 
-  console.log("Admin Data:", adminAuthData);
-  console.log("Admin Error:", adminAuthError);
+  
 
   if (adminAuthData?.user) {
 
@@ -602,12 +464,10 @@ async function doLogin() {
       .eq('auth_user_id', adminAuthData.user.id)
       .maybeSingle();
 
-    console.log("Stage:", stg);
-    console.log("Stage Error:", stageError);
 
     if (stg) {
 
-      console.log("✅ Stage Found");
+     
 
       currentUser = {
         role: 'admin',
@@ -631,8 +491,6 @@ async function doLogin() {
 
   const servantEmail = `${u}@church.local`;
 
-  console.log("Trying Servant Login...");
-  console.log("Servant Email:", servantEmail);
 
   const {
     data: servantAuthData,
@@ -642,13 +500,10 @@ async function doLogin() {
     password: p
   });
 
-  console.log("Servant Data:", servantAuthData);
-  console.log("Servant Error:", servantAuthError);
-
+  
   if (servantAuthData?.user) {
 
-    console.log("✅ Servant Auth Success");
-    console.log("User ID:", servantAuthData.user.id);
+  
 
     const {
       data: sv,
@@ -659,12 +514,9 @@ async function doLogin() {
       .eq('auth_user_id', servantAuthData.user.id)
       .maybeSingle();
 
-    console.log("Servant Record:", sv);
-    console.log("Servant DB Error:", svError);
-
     if (sv) {
 
-      console.log("✅ Servant Login Completed");
+     
 
       currentUser = {
         role: 'servant',
@@ -679,11 +531,11 @@ async function doLogin() {
       return;
     }
 
-    console.log("❌ Auth succeeded but servant record not found");
+   
 
   }
 
-  console.log("❌ LOGIN FAILED");
+ 
 
   err.style.display = 'block';
   setBtn('loginBtn', 'دخول', false);
@@ -715,7 +567,6 @@ async function addStage(){
   const aUser=document.getElementById('newAdminUser').value.trim();
   const aPass=document.getElementById('newAdminPass').value.trim();
   if(!name||!aUser||!aPass){toast('⚠️ جميع الحقول مطلوبة','error');return;}
-  // const {error}=await sb.from('stages').insert({id:'stage_'+Date.now(),name,admin_name:aName||aUser,username:aUser,password:aPass});
   const {error}=await sb.from('stages').insert({
   id:'stage_'+Date.now(),
   name,
@@ -982,101 +833,7 @@ function showEditServant(sv){
   document.getElementById('editServantModal').classList.add('open');
 }
 
-// async function saveEditServant() {
 
-//   console.log("========== SAVE EDIT START ==========");
-
-//   const id = document.getElementById('editServantId').value;
-//   const name = document.getElementById('editServantName').value.trim();
-//   const user = document.getElementById('editServantUser').value.trim();
-//   const role = document.getElementById('editServantRole').value.trim();
-
-//   console.log("Form Data:", {
-//     id,
-//     name,
-//     user,
-//     role,
-//     hasPassword: !!pass
-//   });
-
-//   if (!name || !user) {
-//     console.log("❌ Validation Failed");
-//     toast('الرجاء ملء كل الحقول', 'error');
-//     return;
-//   }
-
-//   const oldServant = currentStageServants.find(s => s.id === id);
-
-//   console.log("Old Servant:", oldServant);
-
-//   // تغيير اليوزر نيم والإيميل في Auth
-//   if (oldServant && oldServant.username !== user) {
-
-//     console.log("🔄 Username changed");
-//     console.log("Calling /api/update-servant...");
-
-//     const response = await fetch('/api/update-servant', {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json'
-//       },
-//       body: JSON.stringify({
-//         id,
-//         username: user
-//       })
-//     });
-
-//     const result = await response.json();
-
-//     console.log("Username API:", result);
-
-//     if (!response.ok) {
-//       toast(result.error || 'Update API Error', 'error');
-//       return;
-//     }
-
-//     console.log("✅ Auth Email Updated");
-//   }
-
-
-//     const result = await response.json();
-
-//     console.log("Password API:", result);
-
-//     if (!response.ok) {
-//       toast(result.error || 'Password Update Error', 'error');
-//       return;
-//     }
-
-//     console.log("✅ Auth Password Updated");
-//   }
-
-//   console.log("Updating servants table...");
-
-//   const { error } = await sb
-//     .from('servants')
-//     .update({
-//       name,
-//       username: user,
-//       email: `${user}@church.local`,
-//       role: role || 'خادم'
-//     })
-//     .eq('id', id);
-
-//   console.log("Supabase Update Error:", error);
-
-//   if (error) {
-//     toast(error.message, 'error');
-//     return;
-//   }
-
-//   console.log("✅ Database Updated Successfully");
-
-//   closeModals();
-//   toast('تم التعديل ✓');
-//   await renderAdminServants();
-
-//   console.log("========== SAVE EDIT END ==========");
 async function saveEditServant() {
 
   console.log("========== SAVE EDIT START ==========");
@@ -1129,10 +886,8 @@ async function saveEditServant() {
       return;
     }
 
-    console.log("✅ Auth Email Updated");
   }
 
-  console.log("Updating servants table...");
 
   const { error } = await sb
     .from('servants')
@@ -1144,21 +899,18 @@ async function saveEditServant() {
     })
     .eq('id', id);
 
-  console.log("Supabase Update Error:", error);
 
   if (error) {
     toast(error.message, 'error');
     return;
   }
 
-  console.log("✅ Database Updated Successfully");
 
   closeModals();
   toast('تم التعديل ✓');
 
   await renderAdminServants();
 
-  console.log("========== SAVE EDIT END ==========");
 }
 async function saveNewServant() {
 
@@ -1477,22 +1229,6 @@ async function saveServantProfile(){
   setTimeout(()=>{btn.textContent='💾 حفظ البيانات الشخصية';btn.style.background='#185FA5';btn.style.borderColor='#185FA5';},2500);
 }
 
-// async function changeServantPassword(){
-//   const current=document.getElementById('sCurrentPass').value;
-//   const newPass=document.getElementById('sNewPass').value;
-//   const confirm=document.getElementById('sConfirmPass').value;
-//   if(!current||!newPass||!confirm){toast('⚠️ يرجى ملء جميع حقول كلمة المرور','error');return;}
-//   if(newPass.length<6){toast('⚠️ كلمة المرور الجديدة 6 أحرف على الأقل','error');return;}
-//   if(newPass!==confirm){toast('⚠️ كلمة المرور الجديدة غير متطابقة','error');return;}
-//   const {data:sv}=await sb.from('servants').select('password').eq('id',currentServantId).single();
-//   if(!sv||sv.password!==current){toast('⚠️ كلمة المرور الحالية غير صحيحة','error');return;}
-//   const {error}=await sb.from('servants').update({password:newPass}).eq('id',currentServantId);
-//   if(error){toast('حدث خطأ، حاول تاني','error');return;}
-//   document.getElementById('sCurrentPass').value='';
-//   document.getElementById('sNewPass').value='';
-//   document.getElementById('sConfirmPass').value='';
-//   toast('✅ تم تغيير كلمة المرور بنجاح');
-// }
 async function changeServantPassword() {
 
   const current = document.getElementById('sCurrentPass').value.trim();
