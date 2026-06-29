@@ -360,8 +360,14 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 const SLOTS=['8ص-12م','12م-4م','4م-8م','8م-12ل'];
 const TRAITS=['قدوة','تعليم','حكمة','تدبير','تواضع','رعاية'];
-
-let currentUser=null,currentStageId=null,currentStageServants=[],currentAdminReport=null,deleteTarget=null,allStages=[];
+let currentUser = null,
+    currentStageId = null,
+    currentStageServants = [],
+    currentAdminReport = null,
+    reportRows = {},
+    deleteTarget = null,
+    allStages = [];
+// let currentUser=null,currentStageId=null,currentStageServants=[],currentAdminReport=null,deleteTarget=null,allStages=[];
 let timesData={};
 let suitableSlots=[];   // [{days:[], from:'', to:''}]
 let unsuitableSlots=[]; // [{days:[], from:'', to:''}]
@@ -756,7 +762,15 @@ async function renderSuperStagesSurveys(){
 }
 async function loadAdminReportForm(){
   const {data:r}=await sb.from('admin_reports').select('*').eq('stage_id',currentStageId).maybeSingle();
-  currentAdminReport=r||null;
+  
+  
+
+currentAdminReport = r || null;
+reportRows = JSON.parse(
+    JSON.stringify(currentAdminReport?.servant_rows || {})
+);
+
+  // currentAdminReport=r||null;
   document.getElementById('rServiceName').value=r?.service_name||'';
   document.getElementById('rPositives').value=r?.positives||'';
   document.getElementById('rNegatives').value=r?.negatives||'';
@@ -764,42 +778,138 @@ async function loadAdminReportForm(){
   buildAdminLeaderPicker();
   buildServantTable(r?.servant_rows||{});
 }
-function buildServantTable(rows={}){
-  document.getElementById('servantTableBody').innerHTML=currentStageServants.map(sv=>{
-    const row=rows[sv.id]||{};
-    return`<tr>
-      <td class="report-input" style="text-align:right;font-weight:600;">${sv.name}</td>
-      <td class="report-input"><input type="text" value="${row.attendance||''}" placeholder="%" onchange="updateRow('${sv.id}','attendance',this.value)"/></td>
-      <td class="report-input"><input type="text" value="${row.visits||''}" placeholder="0" onchange="updateRow('${sv.id}','visits',this.value)"/></td>
-      <td class="report-input"><input type="text" value="${row.lessons||''}" placeholder="0" onchange="updateRow('${sv.id}','lessons',this.value)"/></td>
-      <td class="report-input"><input type="text" value="${row.recommend||''}" placeholder="آه/لأ" onchange="updateRow('${sv.id}','recommend',this.value)"/></td>
-      <td class="report-input"><input type="text" value="${row.notes||''}" placeholder="..." onchange="updateRow('${sv.id}','notes',this.value)"/></td>
-    </tr>`;
-  }).join('');
+
+
+
+function buildServantTable(rows = {}) {
+    document.getElementById('servantTableBody').innerHTML =
+        currentStageServants.map(sv => {
+
+            const row = rows[sv.id] || {};
+
+            return `
+            <tr>
+                <td class="report-input" style="text-align:right;font-weight:600;">${sv.name}</td>
+
+                <td class="report-input">
+                    <input type="text" value="${row.attendance || ''}" placeholder="%">
+                </td>
+
+                <td class="report-input">
+                    <input type="text" value="${row.visits || ''}" placeholder="0">
+                </td>
+
+                <td class="report-input">
+                    <input type="text" value="${row.lessons || ''}" placeholder="0">
+                </td>
+
+                <td class="report-input">
+                    <input type="text" value="${row.recommend || ''}" placeholder="آه/لأ">
+                </td>
+
+                <td class="report-input">
+                    <input type="text" value="${row.notes || ''}" placeholder="...">
+                </td>
+
+            </tr>`;
+
+        }).join('');
 }
+
+
 let pendingRows={};
-function updateRow(svId,field,val){if(!pendingRows[svId])pendingRows[svId]={};pendingRows[svId][field]=val;}
-async function saveAdminReport(){
-  const serviceName=document.getElementById('rServiceName').value.trim();
-  const positives=document.getElementById('rPositives').value.trim();
-  const negatives=document.getElementById('rNegatives').value.trim();
-  if(!serviceName){toast('⚠️ اسم الخدمة مطلوب','error');return;}
-  if(!positives){toast('⚠️ إيجابيات الخدمة مطلوبة','error');return;}
-  if(!negatives){toast('⚠️ سلبيات الخدمة مطلوبة','error');return;}
-  if(!adminLeaderData.length||!adminLeaderData[0].name){toast('⚠️ يرجى اختيار خادم في قسم إمكانيات القائد','error');return;}
-  const emptyRows=currentStageServants.filter(sv=>{
-    const row={...(currentAdminReport?.servant_rows||{}),...pendingRows};
-    const r=row[sv.id]||{};
-    return !r.attendance||!r.recommend;
+
+
+async function saveAdminReport() {
+
+  const serviceName = document.getElementById('rServiceName').value.trim();
+  const positives = document.getElementById('rPositives').value.trim();
+  const negatives = document.getElementById('rNegatives').value.trim();
+
+  if (!serviceName) {
+    toast('⚠️ اسم الخدمة مطلوب', 'error');
+    return;
+  }
+
+  if (!positives) {
+    toast('⚠️ إيجابيات الخدمة مطلوبة', 'error');
+    return;
+  }
+
+  if (!negatives) {
+    toast('⚠️ سلبيات الخدمة مطلوبة', 'error');
+    return;
+  }
+
+  if (!adminLeaderData.length || !adminLeaderData[0].name) {
+    toast('⚠️ يرجى اختيار خادم في قسم إمكانيات القائد', 'error');
+    return;
+  }
+
+  // قراءة البيانات الحالية من الجدول بالكامل
+  reportRows = {};
+
+  document.querySelectorAll("#servantTableBody tr").forEach((tr, index) => {
+
+    const sv = currentStageServants[index];
+    if (!sv) return;
+
+    const inputs = tr.querySelectorAll("input");
+
+    reportRows[sv.id] = {
+      attendance: inputs[0].value.trim(),
+      visits: inputs[1].value.trim(),
+      lessons: inputs[2].value.trim(),
+      recommend: inputs[3].value.trim(),
+      notes: inputs[4].value.trim()
+    };
+
   });
-  if(emptyRows.length>0){toast(`⚠️ يرجى ملء الحضور والترشيح لكل الخدام (${emptyRows.length} خادم ناقص)`,'error');return;}
-  setBtn('saveReportBtn','جاري الحفظ...',true);
-  const mergedRows={...(currentAdminReport?.servant_rows||{}),...pendingRows};
-  const payload={stage_id:currentStageId,service_name:serviceName,positives,negatives,leader_data:adminLeaderData,servant_rows:mergedRows,saved_at:new Date().toLocaleString('ar-EG')};
-  if(currentAdminReport){await sb.from('admin_reports').update(payload).eq('stage_id',currentStageId);}
-  else{payload.id='rep_'+Date.now();await sb.from('admin_reports').insert(payload);}
-  pendingRows={};await loadAdminReportForm();toast('تم حفظ التقرير ✓');setBtn('saveReportBtn','💾 حفظ التقرير',false);
+
+  // التحقق من الحضور والترشيح
+  const emptyRows = currentStageServants.filter(sv => {
+    const r = reportRows[sv.id] || {};
+    return !r.attendance || !r.recommend;
+  });
+
+  if (emptyRows.length > 0) {
+    toast(`⚠️ يرجى ملء الحضور والترشيح لكل الخدام (${emptyRows.length} خادم ناقص)`, 'error');
+    return;
+  }
+
+  setBtn('saveReportBtn', 'جاري الحفظ...', true);
+
+  const payload = {
+    stage_id: currentStageId,
+    service_name: serviceName,
+    positives,
+    negatives,
+    leader_data: adminLeaderData,
+    servant_rows: reportRows,
+    saved_at: new Date().toLocaleString('ar-EG')
+  };
+
+  if (currentAdminReport) {
+    await sb
+      .from('admin_reports')
+      .update(payload)
+      .eq('stage_id', currentStageId);
+  } else {
+    payload.id = 'rep_' + Date.now();
+    await sb
+      .from('admin_reports')
+      .insert(payload);
+  }
+
+  await loadAdminReportForm();
+
+  toast('تم حفظ التقرير ✓');
+
+  setBtn('saveReportBtn', '💾 حفظ التقرير', false);
+
 }
+
+
 async function renderAdminServants(){
   const {data}=await sb.from('servants').select('*').eq('stage_id',currentStageId).order('created_at');
   currentStageServants=data||[];
@@ -820,7 +930,8 @@ async function renderAdminServants(){
       <button class="btn-del icon-btn" onclick="askDelete('${sv.id}')">🗑</button>
     </div>
   </div>`).join('');
-  buildServantTable(currentAdminReport?.servant_rows||{});
+  buildServantTable(reportRows);
+  // buildServantTable(currentAdminReport?.servant_rows||{});
 }
 
 
