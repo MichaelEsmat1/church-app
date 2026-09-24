@@ -448,7 +448,6 @@ function setBtn(id,txt,dis=false){const b=document.getElementById(id);if(b){b.te
 
 // ===== LOGIN =====
 async function doLogin() {
-
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value;
   const err = document.getElementById('loginError');
@@ -456,30 +455,48 @@ async function doLogin() {
   err.style.display = 'none';
   setBtn('loginBtn', 'جاري الدخول...', true);
 
- 
+  try {
+    if (!u || !p) {
+      err.textContent = '⚠️ اكتب اسم المستخدم وكلمة المرور';
+      err.style.display = 'block';
+      return;
+    }
 
-  // ===========================
-  // SUPER ADMIN LOGIN
-  // ===========================
+    // =====================================================
+    // ONE AUTH REQUEST ONLY
+    // Super Admin uses his real email.
+    // Admin / Servant use username@church.local.
+    // After Auth succeeds we identify the role by auth_user_id.
+    // This avoids the old Admin-then-Servant double login attempt.
+    // =====================================================
+    const email = u.includes('@') ? u : `${u}@church.local`;
 
-  if (u.includes('@')) {
+    const { data: authData, error: authError } =
+      await sb.auth.signInWithPassword({
+        email,
+        password: p
+      });
 
-    const {
-      data: authData,
-      error: authError
-    } = await sb.auth.signInWithPassword({
-      email: u,
-      password: p
-    });
+    if (authError || !authData?.user) {
+      console.error('Login failed:', authError);
+      err.textContent = '⚠️ اسم المستخدم أو كلمة المرور غير صحيحة';
+      err.style.display = 'block';
+      return;
+    }
 
-    
-    if (authData?.user) {
+    const authId = authData.user.id;
 
+    // =====================================================
+    // SUPER ADMIN — KEEP FULL ORIGINAL PERMISSIONS
+    // =====================================================
+    if (u.includes('@')) {
       currentUser = {
         role: 'super',
-        authId: authData.user.id,
+        authId,
         email: authData.user.email
       };
+
+      // Super Admin is NEVER restricted by legacy read-only mode.
       setLegacyReadOnlyMode(false);
 
       document.getElementById('superDate').textContent =
@@ -491,121 +508,76 @@ async function doLogin() {
         });
 
       await loadSuperPage();
-
-      setBtn('loginBtn', 'دخول', false);
-
       return;
     }
 
-  }
+    // =====================================================
+    // NORMAL USER — identify Admin or Servant in parallel
+    // =====================================================
+    const [stageResult, servantResult] = await Promise.all([
+      sb.from('stages')
+        .select('*')
+        .eq('auth_user_id', authId)
+        .maybeSingle(),
+      sb.from('servants')
+        .select('*')
+        .eq('auth_user_id', authId)
+        .maybeSingle()
+    ]);
 
-  // ===========================
-  // ADMIN LOGIN
-  // ===========================
+    if (stageResult.error) {
+      console.error('Stage lookup error:', stageResult.error);
+    }
+    if (servantResult.error) {
+      console.error('Servant lookup error:', servantResult.error);
+    }
 
-  const adminEmail = `${u}@church.local`;
-
-  
-
-  const {
-    data: adminAuthData,
-    error: adminAuthError
-  } = await sb.auth.signInWithPassword({
-    email: adminEmail,
-    password: p
-  });
-
-  
-
-  if (adminAuthData?.user) {
-
-    console.log("✅ Admin Auth Success");
-
-    const {
-      data: stg,
-      error: stageError
-    } = await sb
-      .from('stages')
-      .select('*')
-      .eq('auth_user_id', adminAuthData.user.id)
-      .maybeSingle();
-
-
-    if (stg) {
-
-     
-
+    // Admin
+    if (stageResult.data) {
       currentUser = {
         role: 'admin',
-        stageId: stg.id
+        authId,
+        stageId: stageResult.data.id
       };
+      currentStageId = stageResult.data.id;
 
-      currentStageId = stg.id;
-
-      await loadAdminPage(stg);
-
-      setBtn('loginBtn', 'دخول', false);
-
+      // Existing production data is read-only for normal users.
+      await loadAdminPage(stageResult.data);
       return;
     }
 
-  }
-
-  // ===========================
-  // SERVANT LOGIN
-  // ===========================
-
-  const servantEmail = `${u}@church.local`;
-
-
-  const {
-    data: servantAuthData,
-    error: servantAuthError
-  } = await sb.auth.signInWithPassword({
-    email: servantEmail,
-    password: p
-  });
-
-  
-  if (servantAuthData?.user) {
-
-  
-
-    const {
-      data: sv,
-      error: svError
-    } = await sb
-      .from('servants')
-      .select('*')
-      .eq('auth_user_id', servantAuthData.user.id)
-      .maybeSingle();
-
-    if (sv) {
-
-     
-
+    // Servant
+    if (servantResult.data) {
       currentUser = {
         role: 'servant',
-        servantId: sv.id,
-        stageId: sv.stage_id
+        authId,
+        servantId: servantResult.data.id,
+        stageId: servantResult.data.stage_id
       };
 
-      await loadServantPage(sv);
-
-      setBtn('loginBtn', 'دخول', false);
-
+      // Existing production data is read-only for normal users.
+      await loadServantPage(servantResult.data);
       return;
     }
 
-   
+    // Auth succeeded but this account is not linked to a stage/servant.
+    await sb.auth.signOut();
+    currentUser = null;
+    currentStageId = null;
+    err.textContent = '⚠️ الحساب غير مرتبط بمرحلة أو خادم';
+    err.style.display = 'block';
 
+  } catch (loginError) {
+    console.error('Unexpected login error:', loginError);
+    try { await sb.auth.signOut(); } catch (_) {}
+    currentUser = null;
+    currentStageId = null;
+    err.textContent = '⚠️ حصل خطأ أثناء تسجيل الدخول، حاول مرة أخرى';
+    err.style.display = 'block';
+  } finally {
+    // Never leave the login button stuck on "جاري الدخول..."
+    setBtn('loginBtn', 'دخول', false);
   }
-
- 
-
-  err.style.display = 'block';
-  setBtn('loginBtn', 'دخول', false);
-
 }
 function doLogout(){
   setLegacyReadOnlyMode(true);
