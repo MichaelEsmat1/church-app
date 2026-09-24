@@ -1207,9 +1207,20 @@ async function loadServantPage(sv){
   renderTimePicker('unsuitable');
   leaderData=existing?.leader_data||[];
   buildLeaderPicker(othersInStage);
+  // Legacy survey is read-only for normal users, so the original submit button
+  // is intentionally not rendered. Keep this loader compatible with that UI.
   const btn=document.getElementById('submitSurveyBtn');
-  if(existing?.saved_at){btn.textContent='✅ تم الإرسال — يمكنك التعديل وإعادة الإرسال';btn.style.background='#3B6D11';btn.style.borderColor='#3B6D11';}
-  else{btn.textContent='💾 إرسال الاستطلاع';btn.style.background='#185FA5';btn.style.borderColor='#185FA5';}
+  if(btn){
+    if(existing?.saved_at){
+      btn.textContent='✅ تم الإرسال — يمكنك التعديل وإعادة الإرسال';
+      btn.style.background='#3B6D11';
+      btn.style.borderColor='#3B6D11';
+    }else{
+      btn.textContent='💾 إرسال الاستطلاع';
+      btn.style.background='#185FA5';
+      btn.style.borderColor='#185FA5';
+    }
+  }
   window._stageServants=othersInStage;
   switchServantTab('svTabSurvey');
   showPage('servantPage');
