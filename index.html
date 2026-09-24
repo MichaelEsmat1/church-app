@@ -757,8 +757,9 @@ async function loadAdminPage(stage){
   currentStageId=stage.id;
   document.getElementById('adminTitle').textContent='أمين — '+stage.name;
   document.getElementById('adminSubtitle').textContent=stage.admin_name;
-  const {data}=await sb.from('servants').select('*').eq('stage_id',stage.id).order('created_at');
-  currentStageServants=data||[];
+  const {data, error}=await sb.from('servants').select('*').eq('stage_id',stage.id).order('created_at');
+  if(error) throw error;
+  currentStageServants=Array.isArray(data) ? data : [];
   await loadAdminReportForm();
   switchAdminTab('aTabReport');
   showPage('adminPage');
@@ -810,7 +811,12 @@ reportRows = JSON.parse(
   document.getElementById('rServiceName').value=r?.service_name||'';
   document.getElementById('rPositives').value=r?.positives||'';
   document.getElementById('rNegatives').value=r?.negatives||'';
-  adminLeaderData=r?.leader_data||[];
+  adminLeaderData = Array.isArray(r?.leader_data)
+    ? r.leader_data.map(item => ({
+        name: item?.name || '',
+        traits: Array.isArray(item?.traits) ? item.traits : []
+      }))
+    : [];
   buildAdminLeaderPicker();
   buildServantTable(r?.servant_rows||{});
 }
@@ -1318,6 +1324,11 @@ function cycleTime(key,cell){
 
 function buildAdminLeaderPicker(){
   const sec=document.getElementById('adminLeaderPickerSection');
+  if(!sec) return;
+  adminLeaderData = (Array.isArray(adminLeaderData) ? adminLeaderData : []).map(item => ({
+    name: item?.name || '',
+    traits: Array.isArray(item?.traits) ? item.traits : []
+  }));
   if(!adminLeaderData.length)adminLeaderData=[{name:'',traits:[]}];
   sec.innerHTML=adminLeaderData.map((item,i)=>`
     <div class="leader-block" id="alblock_${i}">
