@@ -98,6 +98,22 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
 .time-row span{color:#777;white-space:nowrap;}
 .slot-del{background:none;border:none;cursor:pointer;font-size:16px;color:#ccc;padding:0 4px;}
 .slot-del:hover{color:#a32d2d;}
+
+/* ===== PRODUCTION READ-ONLY + GENERAL SECRETARIAT MESSAGES ===== */
+.readonly-banner{
+  background:#f8f9fa;border:1px solid #e2e6ea;color:#555;border-radius:10px;
+  padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:1.7;
+}
+.general-message-box textarea{min-height:150px;resize:vertical;}
+.general-message-item{border:1px solid #eee;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff;}
+.general-message-meta{font-size:11px;color:#888;margin-bottom:7px;}
+.general-message-text{font-size:13px;line-height:1.8;white-space:pre-wrap;word-break:break-word;}
+.readonly-page input[readonly],.readonly-page textarea[readonly]{
+  background:#f7f7f7;color:#666;cursor:not-allowed;
+}
+#svTabSurvey .leader-block,#svTabSurvey .time-picker-wrap,#aTabReport #adminLeaderPickerSection{pointer-events:none;opacity:.82;}
+#svTabSurvey .add-leader-btn,#aTabReport .add-leader-btn{display:none!important;}
+
 </style>
 </head>
 <body>
@@ -131,25 +147,22 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
     <button class="tab active" onclick="switchSuperTab('sTabStages')">المراحل</button>
     <button class="tab" onclick="switchSuperTab('sTabReports')">تقارير الأمناء</button>
     <button class="tab" onclick="switchSuperTab('sTabSurveys')">استطلاعات الخدام</button>
+    <button class="tab" onclick="switchSuperTab('sTabMessages')">رسائل الأمانة</button>
     <button class="tab" onclick="switchSuperTab('sTabExport')">تصدير</button>
   </div>
   <div id="sTabStages">
-    <div class="card">
-      <p class="section-title">إضافة مرحلة جديدة</p>
-      <label>اسم الخدمة / المرحلة</label>
-      <input type="text" id="newStageName" placeholder="مثال: أعدادي، سنوي، خريجين..." required/>
-      <label>اسم الأمين</label>
-      <input type="text" id="newAdminName" placeholder="مثال: مينا سمير" required/>
-      <label>اسم المستخدم للأمين</label>
-      <input type="text" id="newAdminUser" placeholder="مثال: 01012345678" required/>
-      <label>كلمة مرور الأمين</label>
-      <input type="text" id="newAdminPass" placeholder="مثال: 1234" required/>
-      <button class="btn btn-primary" onclick="addStage()">+ إضافة المرحلة</button>
-    </div>
+    <div class="readonly-banner">🔒 البيانات الحالية محفوظة كما هي للقراءة فقط. لا يمكن تعديل أو حذف المراحل أو البيانات القديمة من الواجهة الحالية.</div>
     <div id="superStagesList"><div class="loading">جاري التحميل...</div></div>
   </div>
   <div id="sTabReports" style="display:none;"><div id="superReportsList"></div></div>
   <div id="sTabSurveys" style="display:none;"><div id="superSurveysList"></div></div>
+  <div id="sTabMessages" style="display:none;">
+    <div class="card">
+      <p class="section-title">رسائل وملاحظات للأمانة العامة</p>
+      <div class="readonly-banner">هذه الرسائل للعرض فقط. البيانات القديمة في النظام لا يتم تعديلها من خلال هذه الصفحة.</div>
+      <div id="superGeneralMessagesList"><div class="loading">جاري التحميل...</div></div>
+    </div>
+  </div>
   <div id="sTabExport" style="display:none;">
     <div class="card">
       <p style="font-size:14px;color:#555;margin-bottom:1rem;">تصدير كل البيانات دفعة واحدة</p>
@@ -172,18 +185,19 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
     <button class="icon-btn" onclick="doLogout()">🚪</button>
   </div>
   <div class="tab-bar">
-    <button class="tab active" onclick="switchAdminTab('aTabReport')">تقريري</button>
+    <button class="tab active" onclick="switchAdminTab('aTabReport')">التقرير</button>
     <button class="tab" onclick="switchAdminTab('aTabServants')">الخدام</button>
   </div>
-  <div id="aTabReport">
+  <div class="readonly-banner" style="margin:0 0 12px;">🔒 البيانات الحالية للقراءة فقط. يمكنك الاطلاع والتصدير، بينما الإضافات والتعديلات على البيانات القديمة متوقفة.</div>
+  <div id="aTabReport" class="readonly-page">
     <div class="card">
       <p class="section-title">تقرير أمين الخدمة</p>
       <label>اسم الخدمة</label>
-      <input type="text" id="rServiceName" placeholder="اسم الخدمة"/>
+      <input type="text" id="rServiceName" readonly placeholder="اسم الخدمة"/>
       <label>إيجابيات الخدمة</label>
-      <textarea id="rPositives" placeholder="اكتب إيجابيات الخدمة..."></textarea>
+      <textarea id="rPositives" readonly placeholder="اكتب إيجابيات الخدمة..."></textarea>
       <label>سلبيات الخدمة (يجب أن تُعالج العام القادم)</label>
-      <textarea id="rNegatives" placeholder="اكتب سلبيات الخدمة..."></textarea>
+      <textarea id="rNegatives" readonly placeholder="اكتب سلبيات الخدمة..."></textarea>
       <label>من تتوافر فيه إمكانيات القائد الناجح</label>
       <p style="font-size:12px;color:#777;margin-bottom:8px;">اختر اسم الخادم ثم حدد ما يتميز به من الصفات</p>
       <div id="adminLeaderPickerSection"></div>
@@ -200,14 +214,14 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
           <th>ملاحظات</th>
         </tr></thead><tbody id="servantTableBody"></tbody></table>
       </div>
-      <button class="btn btn-primary" id="saveReportBtn" onclick="saveAdminReport()" style="margin-top:1rem;">💾 حفظ التقرير</button>
+      <div class="readonly-banner" style="margin-top:1rem;">📋 التقرير المعروض محفوظ من البيانات الحالية ولا يمكن تعديله.</div>
     </div>
   </div>
   <div id="aTabServants" style="display:none;">
     <div class="stat-grid" id="adminStats"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <p class="section-title" style="margin:0;">الخدام</p>
-      <button class="icon-btn" onclick="showAddServantModal()">+ إضافة خادم</button>
+      <span class="badge badge-pending">قراءة فقط</span>
     </div>
     <div id="adminServantList"></div>
     <button class="btn btn-success" onclick="exportStageServants()" style="margin-top:0.5rem;">📊 تصدير Excel</button>
@@ -218,7 +232,7 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
 <div id="servantPage" class="page">
   <div class="header">
     <div style="display:flex;align-items:center;gap:12px;">
-      <div id="servantAvatar" onclick="triggerAvatarUpload()" style="width:48px;height:48px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;overflow:hidden;border:2px solid #ddd;flex-shrink:0;" title="اضغط لتغيير الصورة">
+      <div id="servantAvatar" style="width:48px;height:48px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;overflow:hidden;border:2px solid #ddd;flex-shrink:0;" title="اضغط لتغيير الصورة">
         👤
       </div>
       <div>
@@ -228,14 +242,19 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
     </div>
     <button class="icon-btn" onclick="doLogout()">🚪</button>
   </div>
-  <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)"/>
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchServantTab('svTabSurvey')">بياناتي</button>
+    <button class="tab" onclick="switchServantTab('svTabMessage')">رسالة للأمانة العامة</button>
+  </div>
+  <div id="svTabSurvey" class="readonly-page">
+  <div class="readonly-banner">🔒 البيانات الحالية للقراءة فقط. يمكنك الاطلاع عليها كما هي، ولا يمكن تعديل الاستطلاع أو البيانات القديمة.</div>
   <div class="card">
     <!-- بيانات الخادم الشخصية -->
     <div style="background:#f9f9f7;border-radius:10px;padding:12px 14px;margin-bottom:1rem;border:1px solid #eee;">
       <p style="font-size:13px;font-weight:600;color:#555;margin-bottom:8px;">بياناتي الشخصية</p>
       <label style="margin-top:0;">رقم الموبايل</label>
-      <input type="tel" id="sMobile" placeholder="مثال: 01012345678"/>
-      <button class="btn btn-primary" onclick="saveServantProfile()" style="margin-top:8px;padding:7px;">💾 حفظ البيانات الشخصية</button>
+      <input type="tel" id="sMobile" readonly placeholder="مثال: 01012345678"/>
+      <div class="readonly-banner" style="margin-top:8px;">البيانات الشخصية الحالية للقراءة فقط.</div>
       <hr style="border:none;border-top:1px solid #eee;margin:1rem 0;"/>
       <p style="font-size:13px;font-weight:600;color:#555;margin-bottom:8px;">🔐 تغيير كلمة المرور</p>
       <label style="margin-top:0;">كلمة المرور الحالية</label>
@@ -244,16 +263,16 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
       <input type="password" id="sNewPass" placeholder="أدخل كلمة المرور الجديدة (6 أحرف على الأقل)"/>
       <label>تأكيد كلمة المرور الجديدة</label>
       <input type="password" id="sConfirmPass" placeholder="أعد كتابة كلمة المرور الجديدة"/>
-      <button class="btn" onclick="changeServantPassword()" style="margin-top:8px;padding:7px;background:#185FA5;color:#fff;border-color:#185FA5;">🔑 تغيير كلمة المرور</button>
+      <div class="readonly-banner" style="margin-top:8px;">🔒 تغيير كلمة المرور متوقف لأن البيانات الحالية للقراءة فقط.</div>
     </div>
 
     <div class="info-box">📋 إجاباتك سرية ولن يطلع عليها إلا الأمانة العامة للخدمة فقط</div>
 
     <label>إيجابيات الخدمة</label>
-    <textarea id="sPositives" placeholder="ما الذي أعجبك في الخدمة هذا العام؟"></textarea>
+    <textarea id="sPositives" readonly placeholder="ما الذي أعجبك في الخدمة هذا العام؟"></textarea>
 
     <label>سلبيات الخدمة</label>
-    <textarea id="sNegatives" placeholder="ما الذي يحتاج إلى تحسين؟"></textarea>
+    <textarea id="sNegatives" readonly placeholder="ما الذي يحتاج إلى تحسين؟"></textarea>
 
     <label style="margin-top:1.25rem;">من تتوافر فيه سمات القائد الناجح؟</label>
     <p style="font-size:12px;color:#777;margin-bottom:8px;">اختر اسم الخادم ثم حدد ما يتميز به من الصفات</p>
@@ -271,7 +290,22 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
     <button class="add-leader-btn" onclick="addTimeSlot('unsuitable')">+ إضافة موعد</button>
 
 
-    <button class="btn btn-primary" id="submitSurveyBtn" onclick="saveServantSurvey()" style="margin-top:1.25rem;">💾 إرسال الاستطلاع</button>
+    <div class="readonly-banner" style="margin-top:1.25rem;">📋 الاستطلاع الحالي محفوظ للقراءة فقط.</div>
+  </div>
+  </div>
+
+  <div id="svTabMessage" style="display:none;">
+    <div class="card general-message-box">
+      <p class="section-title">إرسال ملاحظة للأمانة العامة</p>
+      <div class="readonly-banner">اكتب أي ملاحظة أو تعليق أو رسالة تحب توصلها للأمانة العامة للخدمة. الرسالة الجديدة فقط هي التي يمكن إرسالها.</div>
+      <label>الرسالة</label>
+      <textarea id="generalMessageText" placeholder="اكتب ملاحظتك أو رسالتك هنا..."></textarea>
+      <button class="btn btn-primary" id="sendGeneralMessageBtn" onclick="sendGeneralMessage()" style="margin-top:10px;">📨 إرسال للأمانة العامة</button>
+    </div>
+    <div class="card">
+      <p class="section-title">رسائلي السابقة</p>
+      <div id="myGeneralMessagesList"><div class="loading">جاري التحميل...</div></div>
+    </div>
   </div>
 </div>
 
@@ -357,6 +391,7 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
 const SUPABASE_URL='https://tporikleqmekhdriuepn.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwb3Jpa2xlcW1la2hkcml1ZXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NTAyMTMsImV4cCI6MjA5NzAyNjIxM30.u81rZB2d8B0KtbqZ72zGHmsP2Y-63vdSESc4NG05Itw';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const LEGACY_READ_ONLY=true;
 const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 const SLOTS=['8ص-12م','12م-4م','4م-8م','8م-12ل'];
 const TRAITS=['قدوة','تعليم','حكمة','تدبير','تواضع','رعاية'];
@@ -561,13 +596,17 @@ function doLogout(){
 // ===== SUPER =====
 async function loadSuperPage(){const {data}=await sb.from('stages').select('*').order('created_at');allStages=data||[];renderSuperStages();showPage('superPage');}
 function switchSuperTab(id){
-  ['sTabStages','sTabReports','sTabSurveys','sTabExport'].forEach(t=>document.getElementById(t).style.display=t===id?'block':'none');
-  document.querySelectorAll('#superPage .tab').forEach((t,i)=>t.classList.toggle('active',['sTabStages','sTabReports','sTabSurveys','sTabExport'][i]===id));
+  const ids=['sTabStages','sTabReports','sTabSurveys','sTabMessages','sTabExport'];
+  ids.forEach(t=>document.getElementById(t).style.display=t===id?'block':'none');
+  document.querySelectorAll('#superPage .tab').forEach((t,i)=>t.classList.toggle('active',ids[i]===id));
   if(id==='sTabReports')renderSuperReports();
   if(id==='sTabSurveys')renderSuperSurveys();
+  if(id==='sTabMessages')renderSuperGeneralMessages();
   if(id==='sTabExport')renderSuperExport();
 }
 async function addStage(){
+  if(typeof LEGACY_READ_ONLY!=='undefined'&&LEGACY_READ_ONLY){toast('🔒 البيانات الحالية للقراءة فقط','error');return;}
+
   const name=document.getElementById('newStageName').value.trim();
   const aName=document.getElementById('newAdminName').value.trim();
   const aUser=document.getElementById('newAdminUser').value.trim();
@@ -595,13 +634,14 @@ function renderSuperStages(){
       </div>
       <div class="actions-row">
         <button class="icon-btn" onclick="superViewStage('${s.id}')">👁 عرض</button>
-        <button class="icon-btn" onclick="showEditStage('${s.id}')">✏️</button>
-        <button class="btn-del icon-btn" onclick="deleteStage('${s.id}')">🗑</button>
+        <span class="badge badge-pending">قراءة فقط</span>
       </div>
     </div>`;
   }).join('');
 }
-async function deleteStage(id){if(!confirm('هتحذف المرحلة دي وكل بياناتها؟'))return;await sb.from('stages').delete().eq('id',id);toast('تم الحذف');await loadSuperPage();}
+async function deleteStage(id){
+  if(typeof LEGACY_READ_ONLY!=='undefined'&&LEGACY_READ_ONLY){toast('🔒 البيانات الحالية للقراءة فقط','error');return;}
+if(!confirm('هتحذف المرحلة دي وكل بياناتها؟'))return;await sb.from('stages').delete().eq('id',id);toast('تم الحذف');await loadSuperPage();}
 
 function showEditStage(id){
   const s=allStages.find(x=>x.id===id);if(!s)return;
@@ -613,6 +653,8 @@ function showEditStage(id){
   document.getElementById('editStageModal').classList.add('open');
 }
 async function saveEditStage(){
+  if(typeof LEGACY_READ_ONLY!=='undefined'&&LEGACY_READ_ONLY){toast('🔒 البيانات الحالية للقراءة فقط','error');return;}
+
   const id=document.getElementById('editStageId').value;
   const name=document.getElementById('editStageName').value.trim();
   const admin_name=document.getElementById('editStageAdminName').value.trim();
@@ -792,23 +834,23 @@ function buildServantTable(rows = {}) {
                 <td class="report-input" style="text-align:right;font-weight:600;">${sv.name}</td>
 
                 <td class="report-input">
-                    <input type="text" value="${row.attendance || ''}" placeholder="%">
+                    <input type="text" value="${row.attendance || ''}" placeholder="%" readonly>
                 </td>
 
                 <td class="report-input">
-                    <input type="text" value="${row.visits || ''}" placeholder="0">
+                    <input type="text" value="${row.visits || ''}" placeholder="0" readonly>
                 </td>
 
                 <td class="report-input">
-                    <input type="text" value="${row.lessons || ''}" placeholder="0">
+                    <input type="text" value="${row.lessons || ''}" placeholder="0" readonly>
                 </td>
 
                 <td class="report-input">
-                    <input type="text" value="${row.recommend || ''}" placeholder="آه/لأ">
+                    <input type="text" value="${row.recommend || ''}" placeholder="آه/لأ" readonly>
                 </td>
 
                 <td class="report-input">
-                    <input type="text" value="${row.notes || ''}" placeholder="...">
+                    <input type="text" value="${row.notes || ''}" placeholder="..." readonly>
                 </td>
 
             </tr>`;
@@ -821,6 +863,8 @@ let pendingRows={};
 
 
 async function saveAdminReport() {
+  if(typeof LEGACY_READ_ONLY!=='undefined'&&LEGACY_READ_ONLY){toast('🔒 البيانات الحالية للقراءة فقط','error');return;}
+
 
   const serviceName = document.getElementById('rServiceName').value.trim();
   const positives = document.getElementById('rPositives').value.trim();
@@ -926,8 +970,7 @@ async function renderAdminServants(){
     <div><div class="item-name">${sv.name}</div><div class="item-meta">${sv.role} | 👤 ${sv.username}</div></div>
     <div class="actions-row">
       <span class="badge ${surveyedIds.has(sv.id)?'badge-done':'badge-pending'}">${surveyedIds.has(sv.id)?'ملأ الاستطلاع':'لم يملأ'}</span>
-      <button class="icon-btn" onclick='showEditServant(${JSON.stringify(sv)})'>✏️</button>
-      <button class="btn-del icon-btn" onclick="askDelete('${sv.id}')">🗑</button>
+      <span class="badge badge-pending">قراءة فقط</span>
     </div>
   </div>`).join('');
   buildServantTable(reportRows);
@@ -946,6 +989,8 @@ function showEditServant(sv){
 
 
 async function saveEditServant() {
+  if(typeof LEGACY_READ_ONLY!=='undefined'&&LEGACY_READ_ONLY){toast('🔒 البيانات الحالية للقراءة فقط','error');return;}
+
 
   console.log("========== SAVE EDIT START ==========");
 
@@ -1024,6 +1069,8 @@ async function saveEditServant() {
 
 }
 async function saveNewServant() {
+  if(typeof LEGACY_READ_ONLY!=='undefined'&&LEGACY_READ_ONLY){toast('🔒 البيانات الحالية للقراءة فقط','error');return;}
+
 
   const name = document.getElementById('newServantName').value.trim();
   const user = document.getElementById('newServantUser').value.trim();
@@ -1081,8 +1128,7 @@ async function saveNewServant() {
 }
 
 function askDelete(id){deleteTarget=id;document.getElementById('deleteModal').classList.add('open');}
-// async function confirmDelete()
-// {if(!deleteTarget)return;await sb.from('servants').delete().eq('id',deleteTarget);closeModals();deleteTarget=null;toast('تم الحذف');await renderAdminServants();}
+// Old delete implementation intentionally disabled in production read-only mode.
 
 async function confirmDelete(){
 
@@ -1164,7 +1210,94 @@ async function loadServantPage(sv){
   if(existing?.saved_at){btn.textContent='✅ تم الإرسال — يمكنك التعديل وإعادة الإرسال';btn.style.background='#3B6D11';btn.style.borderColor='#3B6D11';}
   else{btn.textContent='💾 إرسال الاستطلاع';btn.style.background='#185FA5';btn.style.borderColor='#185FA5';}
   window._stageServants=othersInStage;
+  switchServantTab('svTabSurvey');
   showPage('servantPage');
+}
+
+
+function switchServantTab(id){
+  ['svTabSurvey','svTabMessage'].forEach(t=>{
+    const el=document.getElementById(t);
+    if(el)el.style.display=t===id?'block':'none';
+  });
+  document.querySelectorAll('#servantPage .tab').forEach((t,i)=>{
+    t.classList.toggle('active',['svTabSurvey','svTabMessage'][i]===id);
+  });
+  if(id==='svTabMessage'){
+    document.getElementById('generalMessageText').value='';
+    loadMyGeneralMessages();
+  }
+}
+
+async function sendGeneralMessage(){
+  const message=document.getElementById('generalMessageText').value.trim();
+  if(!message){toast('⚠️ اكتب الرسالة أولاً','error');return;}
+  if(!currentServantId){toast('⚠️ انتهت الجلسة، سجل الدخول مرة أخرى','error');return;}
+  setBtn('sendGeneralMessageBtn','جاري الإرسال...',true);
+
+  const {data:sv}=await sb.from('servants').select('name,stage_id').eq('id',currentServantId).maybeSingle();
+  if(!sv){setBtn('sendGeneralMessageBtn','📨 إرسال للأمانة العامة',false);toast('حدث خطأ في بيانات الخادم','error');return;}
+
+  const {data:stage}=await sb.from('stages').select('name').eq('id',sv.stage_id).maybeSingle();
+
+  const payload={
+    id:'msg_'+Date.now(),
+    servant_id:currentServantId,
+    stage_id:sv.stage_id,
+    servant_name:sv.name||'',
+    stage_name:stage?.name||'',
+    message
+  };
+
+  const {error}=await sb.from('general_messages').insert(payload);
+  if(error){
+    console.error(error);
+    toast('حدث خطأ أثناء إرسال الرسالة','error');
+    setBtn('sendGeneralMessageBtn','📨 إرسال للأمانة العامة',false);
+    return;
+  }
+
+  document.getElementById('generalMessageText').value='';
+  toast('تم إرسال الرسالة للأمانة العامة ✓');
+  setBtn('sendGeneralMessageBtn','📨 إرسال للأمانة العامة',false);
+  await loadMyGeneralMessages();
+}
+
+async function loadMyGeneralMessages(){
+  const el=document.getElementById('myGeneralMessagesList');
+  if(!el)return;
+  el.innerHTML='<div class="loading">جاري التحميل...</div>';
+  const {data,error}=await sb.from('general_messages')
+    .select('message,created_at')
+    .eq('servant_id',currentServantId)
+    .order('created_at',{ascending:false});
+
+  if(error){el.innerHTML='<p style="font-size:12px;color:#b42318;">تعذر تحميل الرسائل حالياً.</p>';return;}
+  if(!data?.length){el.innerHTML='<p style="font-size:12px;color:#aaa;">لا توجد رسائل سابقة.</p>';return;}
+  el.innerHTML=data.map(m=>`<div class="general-message-item">
+    <div class="general-message-meta">${new Date(m.created_at).toLocaleString('ar-EG')}</div>
+    <div class="general-message-text">${escapeHtml(m.message)}</div>
+  </div>`).join('');
+}
+
+async function renderSuperGeneralMessages(){
+  const el=document.getElementById('superGeneralMessagesList');
+  if(!el)return;
+  el.innerHTML='<div class="loading">جاري التحميل...</div>';
+  const {data,error}=await sb.from('general_messages')
+    .select('servant_name,stage_name,message,created_at')
+    .order('created_at',{ascending:false});
+
+  if(error){el.innerHTML='<p style="font-size:12px;color:#b42318;">تعذر تحميل الرسائل. تأكد من إنشاء جدول general_messages وRLS.</p>';return;}
+  if(!data?.length){el.innerHTML='<p style="font-size:12px;color:#aaa;">لا توجد رسائل حتى الآن.</p>';return;}
+  el.innerHTML=data.map(m=>`<div class="general-message-item">
+    <div class="general-message-meta">👤 ${escapeHtml(m.servant_name||'—')} · ${escapeHtml(m.stage_name||'—')} · ${new Date(m.created_at).toLocaleString('ar-EG')}</div>
+    <div class="general-message-text">${escapeHtml(m.message)}</div>
+  </div>`).join('');
+}
+
+function escapeHtml(value){
+  return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
 }
 
 function buildTimesTable(){
@@ -1330,6 +1463,8 @@ async function uploadAvatar(input){
 }
 
 async function saveServantProfile(){
+  if(typeof LEGACY_READ_ONLY!=='undefined'&&LEGACY_READ_ONLY){toast('🔒 البيانات الحالية للقراءة فقط','error');return;}
+
   const mobile=document.getElementById('sMobile').value.trim();
   await sb.from('servants').update({mobile}).eq('id',currentServantId);
   toast('تم حفظ البيانات ✓');
@@ -1341,6 +1476,8 @@ async function saveServantProfile(){
 }
 
 async function changeServantPassword() {
+  if(typeof LEGACY_READ_ONLY!=='undefined'&&LEGACY_READ_ONLY){toast('🔒 البيانات الحالية للقراءة فقط','error');return;}
+
 
   const current = document.getElementById('sCurrentPass').value.trim();
   const newPass = document.getElementById('sNewPass').value.trim();
@@ -1413,6 +1550,8 @@ async function changeServantPassword() {
 
 }
 async function saveServantSurvey(){
+  if(typeof LEGACY_READ_ONLY!=='undefined'&&LEGACY_READ_ONLY){toast('🔒 البيانات الحالية للقراءة فقط','error');return;}
+
   const positives=document.getElementById('sPositives').value.trim();
   const negatives=document.getElementById('sNegatives').value.trim();
   if(!positives){toast('⚠️ إيجابيات الخدمة مطلوبة','error');return;}
