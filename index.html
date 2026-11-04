@@ -198,6 +198,7 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
   <div class="tab-bar">
     <button class="tab active" onclick="switchAdminTab('aTabReport')">التقرير</button>
     <button class="tab" onclick="switchAdminTab('aTabServants')">الخدام</button>
+    <button class="tab" onclick="switchAdminTab('aTabWeekly')">التقرير الأسبوعي</button>
   </div>
   <div class="readonly-banner legacy-readonly-banner" style="margin:0 0 12px;">🔒 البيانات الحالية للقراءة فقط. يمكنك الاطلاع والتصدير، بينما الإضافات والتعديلات على البيانات القديمة متوقفة.</div>
   <div id="aTabReport">
@@ -236,6 +237,28 @@ td.report-input input:focus{outline:none;background:#f0f8ff;border-radius:4px;pa
     </div>
     <div id="adminServantList"></div>
     <button class="btn btn-success" onclick="exportStageServants()" style="margin-top:0.5rem;">📊 تصدير Excel</button>
+  </div>
+  <div id="aTabWeekly" style="display:none;">
+    <div class="card">
+      <p class="section-title">التقرير الأسبوعي للخدام</p>
+      <label for="wkWeek">بداية الأسبوع</label>
+      <input type="date" id="wkWeek" onchange="loadWeeklyReport()"/>
+      <div style="overflow-x:auto;margin-top:1rem;">
+        <table><thead><tr>
+          <th style="text-align:right;">اسم الخادم</th>
+          <th>حضر الكنيسة</th>
+          <th>حضر الدرس</th>
+          <th>نزل افتقاد</th>
+          <th>أب الاعتراف</th>
+          <th>اعترف</th>
+          <th>حضر القداس الشهري</th>
+        </tr></thead><tbody id="wkBody"></tbody></table>
+      </div>
+      <button class="btn btn-primary" id="wkSaveBtn" onclick="saveWeeklyReport()">💾 حفظ التقرير الأسبوعي</button>
+      <hr class="divider"/>
+      <p class="section-title">ملخص الأسبوع</p>
+      <div class="stat-grid" id="wkSummary"></div>
+    </div>
   </div>
 </div>
 
@@ -765,13 +788,103 @@ async function loadAdminPage(stage){
   showPage('adminPage');
 }
 function switchAdminTab(id){
-  ['aTabReport','aTabServants','aTabSurveysSuper'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=t===id?'block':'none';});
+  ['aTabReport','aTabServants','aTabWeekly','aTabSurveysSuper'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=t===id?'block':'none';});
   document.querySelectorAll('#adminPage .tab').forEach((t,i)=>{
-    const ids=['aTabReport','aTabServants','aTabSurveysSuper'];
+    const ids=['aTabReport','aTabServants','aTabWeekly','aTabSurveysSuper'];
     t.classList.toggle('active',ids[i]===id);
   });
+  // The legacy read-only banner does not apply to the (editable) weekly report tab
+  document.querySelectorAll('#adminPage .legacy-readonly-banner').forEach(el=>el.style.display=(id!=='aTabWeekly'&&isLegacyReadOnly())?'block':'none');
   if(id==='aTabServants')renderAdminServants();
+  if(id==='aTabWeekly')initWeeklyReport();
   if(id==='aTabSurveysSuper')renderSuperStagesSurveys();
+}
+
+// ===== WEEKLY SERVANTS REPORT =====
+let wkLoadToken=0;
+function wkFmt(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function weekStartOf(value){
+  const [y,m,d]=(value||wkFmt(new Date())).split('-').map(Number);
+  const dt=new Date(y,m-1,d);
+  dt.setDate(dt.getDate()-dt.getDay()); // Sunday = start of week
+  return wkFmt(dt);
+}
+function initWeeklyReport(){
+  const inp=document.getElementById('wkWeek');
+  if(!inp.value)inp.value=weekStartOf();
+  loadWeeklyReport();
+}
+async function loadWeeklyReport(){
+  const inp=document.getElementById('wkWeek');
+  const week=weekStartOf(inp.value);
+  inp.value=week;
+  const token=++wkLoadToken;
+  document.getElementById('wkBody').innerHTML='<tr><td colspan="7" class="loading">جاري التحميل...</td></tr>';
+  const {data,error}=await sb.from('servant_weekly_reports').select('*').eq('stage_id',currentStageId).eq('week_start',week);
+  if(token!==wkLoadToken)return; // a newer week was selected meanwhile
+  if(error){console.error('Weekly report load error:',error);toast('تعذر تحميل التقرير الأسبوعي','error');}
+  const byServant={};
+  (data||[]).forEach(r=>{byServant[r.servant_id]=r;});
+  renderWeeklyRows(byServant);
+}
+function renderWeeklyRows(byServant){
+  const view=currentUser?.role==='super'; // super: view only (RLS grants select only)
+  const dis=view?' disabled':'';
+  const tbody=document.getElementById('wkBody');
+  if(!currentStageServants.length){
+    tbody.innerHTML='<tr><td colspan="7" style="color:#aaa;">لا يوجد خدام.</td></tr>';
+  }else{
+    const cb=(sv,key,r)=>`<td><input type="checkbox" style="width:16px;height:16px;" data-sv="${escapeHtml(sv.id)}" data-k="${key}" ${r&&r[key]?'checked':''}${dis} onchange="updateWeeklySummary()"/></td>`;
+    tbody.innerHTML=currentStageServants.map(sv=>{
+      const r=byServant[sv.id];
+      return `<tr>
+        <td>${escapeHtml(sv.name)}</td>
+        ${cb(sv,'attended_church',r)}${cb(sv,'attended_lesson',r)}${cb(sv,'did_visit',r)}
+        <td><input type="text" style="min-width:110px;" data-sv="${escapeHtml(sv.id)}" data-k="confession_father" value="${escapeHtml(r?.confession_father||'')}" placeholder="اسم أب الاعتراف"${dis}/></td>
+        ${cb(sv,'confessed',r)}${cb(sv,'attended_monthly_mass',r)}
+      </tr>`;
+    }).join('');
+  }
+  const saveBtn=document.getElementById('wkSaveBtn');
+  if(saveBtn)saveBtn.style.display=view?'none':'block';
+  updateWeeklySummary();
+}
+function updateWeeklySummary(){
+  const total=currentStageServants.length;
+  const count=k=>document.querySelectorAll(`#wkBody input[type=checkbox][data-k="${k}"]:checked`).length;
+  const items=[['حضر الكنيسة','attended_church'],['حضر الدرس','attended_lesson'],['نزل افتقاد','did_visit'],['اعترف','confessed'],['حضر القداس الشهري','attended_monthly_mass']];
+  document.getElementById('wkSummary').innerHTML=items.map(([label,k])=>
+    `<div class="stat-box"><p class="s-label">${label}</p><p class="s-val">${count(k)} / ${total}</p></div>`).join('');
+}
+async function saveWeeklyReport(){
+  if(currentUser?.role!=='admin'){toast('الحفظ متاح لأمين الخدمة فقط','error');return;}
+  if(!currentStageServants.length){toast('لا يوجد خدام','error');return;}
+  const week=weekStartOf(document.getElementById('wkWeek').value);
+  const val=(svId,k)=>document.querySelector(`#wkBody [data-sv="${CSS.escape(svId)}"][data-k="${k}"]`);
+  const now=new Date().toISOString();
+  const rows=currentStageServants.map(sv=>({
+    id:'swr_'+sv.id+'_'+week,
+    servant_id:sv.id,
+    stage_id:currentStageId,
+    week_start:week,
+    attended_church:!!val(sv.id,'attended_church')?.checked,
+    attended_lesson:!!val(sv.id,'attended_lesson')?.checked,
+    did_visit:!!val(sv.id,'did_visit')?.checked,
+    confession_father:(val(sv.id,'confession_father')?.value||'').trim(),
+    confessed:!!val(sv.id,'confessed')?.checked,
+    attended_monthly_mass:!!val(sv.id,'attended_monthly_mass')?.checked,
+    saved_at:now
+  }));
+  setBtn('wkSaveBtn','جاري الحفظ...',true);
+  try{
+    const {error}=await sb.from('servant_weekly_reports').upsert(rows,{onConflict:'servant_id,week_start'});
+    if(error){console.error('Weekly report save error:',error);toast('تعذر حفظ التقرير الأسبوعي','error');return;}
+    toast('تم حفظ التقرير الأسبوعي ✓');
+  }catch(e){
+    console.error('Weekly report save error:',e);toast('تعذر حفظ التقرير الأسبوعي','error');
+  }finally{
+    setBtn('wkSaveBtn','💾 حفظ التقرير الأسبوعي',false);
+  }
 }
 async function renderSuperStagesSurveys(){
   const el=document.getElementById('superStagesSurveysList');
